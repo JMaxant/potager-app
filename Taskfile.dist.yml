@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+dotenv: ['.env']
+
+tasks:
+  up:
+    desc: Start Postgres locally
+    cmd: docker compose up -d db
+
+  down:
+    desc: Stop the local stack
+    cmd: docker compose down
+
+  migrate:
+    desc: Apply migrations
+    cmd: goose -dir migrations postgres "$DATABASE_URL" up
+
+  migrate:down:
+    desc: Roll back the last migration
+    cmd: goose -dir migrations postgres "$DATABASE_URL" down
+
+  generate:
+    desc: Regenerate sqlc and templ output
+    cmds:
+      - sqlc generate
+      - templ generate
+
+  run:
+    desc: Run the server
+    cmd: go run ./cmd/potager
+
+  test:
+    desc: Run the test suite
+    cmd: go test ./...
+
+  lint:
+    desc: Vet and static analysis
+    cmds:
+      - go vet ./...
+      - staticcheck ./...
+
+  check:
+    desc: Everything CI runs
+    cmds:
+      - task: lint
+      - task: test
+      - sqlc diff
+      - templ generate --check
