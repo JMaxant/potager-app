@@ -35,6 +35,17 @@ func TestExpectedEnd(t *testing.T) {
 		}
 	})
 
+	t.Run("a transplanted crop with no transplant date has no computed end", func(t *testing.T) {
+		p := potager.Planting{
+			Purpose:   potager.PurposeFood,
+			SownAt:    &sown,
+			Varieties: []potager.PlantingVariety{{Variety: tomate}},
+		}
+		if _, ok := potager.ExpectedEnd(p); ok {
+			t.Error("expected no computed end: counting a transplanted crop from its sowing is wrong")
+		}
+	})
+
 	t.Run("a direct-sown crop counts from the sowing", func(t *testing.T) {
 		p := potager.Planting{
 			Purpose:   potager.PurposeFood,

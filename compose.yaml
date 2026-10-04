@@ -15,17 +15,48 @@ services:
       timeout: 3s
       retries: 10
 
+  migrate:
+    build:
+      context: .
+      target: migrate
+    environment:
+      GOOSE_DRIVER: postgres
+      GOOSE_DBSTRING: postgres://potager:${POSTGRES_PASSWORD:-potager}@db:5432/potager?sslmode=disable
+    command: ["-dir", "/migrations", "up"]
+    depends_on:
+      db:
+        condition: service_healthy
+
   app:
     build: .
     environment:
       DATABASE_URL: postgres://potager:${POSTGRES_PASSWORD:-potager}@db:5432/potager?sslmode=disable
       LISTEN_ADDR: ":8080"
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+  # HTTPS and HTTP basic auth in front of the app until step 3 brings accounts.
+  # The app itself is not published on the host.
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+      BASIC_AUTH_USER: ${BASIC_AUTH_USER:-potager}
+      BASIC_AUTH_HASH: ${BASIC_AUTH_HASH:?set BASIC_AUTH_HASH, see .env.example}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
     ports:
-      - "127.0.0.1:8080:8080"
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - app
     restart: unless-stopped
 
 volumes:
   pgdata:
+  caddy_data:

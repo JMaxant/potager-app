@@ -16,7 +16,7 @@ const (
 //
 // The distinction that matters is between what a plant *takes up* and what it
 // *exports*. A cover crop is terminated before it fruits, so everything it took
-// up is returned to the bed when it is incorporated: mustard is a hungry plant
+// up is returned to the bed when it is terminated: mustard is a hungry plant
 // with a neutral net effect. A legume grown for food is the mirror image — it
 // fixes nitrogen and then carries most of it away in the seed, so a harvested
 // pea crop enriches the bed far less than its nodules suggest.
@@ -28,7 +28,7 @@ func NetEffect(purpose Purpose, demand NitrogenDemand, nitrogenFixing bool) Soil
 		return EffectEnriching
 	case purpose == PurposeCover:
 		// A catch crop. It holds nutrients over winter that would otherwise
-		// leach, and gives them back on incorporation.
+		// leach, and gives them back when it is terminated.
 		return EffectNeutral
 	case nitrogenFixing:
 		// Grown for food: the nitrogen leaves in the harvest.

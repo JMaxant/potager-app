@@ -42,11 +42,30 @@ func ExpectedEnd(p Planting) (Date, bool) {
 	if !ok {
 		return Date{}, false
 	}
-	start, ok := StartDate(p)
+	start, ok := maturityStart(p)
 	if !ok {
 		return Date{}, false
 	}
 	return start.AddDays(days), true
+}
+
+// maturityStart is the date days-to-maturity is counted from. Unlike StartDate
+// it never falls back: seed packets count a transplanted crop from the
+// transplant, so counting from the sowing would show a harvest weeks too early.
+// A direct-sown crop that was only transplanted is not computed either.
+func maturityStart(p Planting) (Date, bool) {
+	from := MaturityFromSowing
+	if len(p.Varieties) > 0 {
+		from = p.Varieties[0].Variety.Species.MaturityFrom
+	}
+	d := p.SownAt
+	if from == MaturityFromTransplant {
+		d = p.TransplantedAt
+	}
+	if d == nil {
+		return Date{}, false
+	}
+	return *d, true
 }
 
 // maturityDays takes the slowest component of a planting: a mix is ready when

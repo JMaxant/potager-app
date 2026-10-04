@@ -1,0 +1,13 @@
+{$SITE_ADDRESS} {
+	# Liveness probe stays open; everything else needs credentials.
+	handle /healthz {
+		reverse_proxy app:8080
+	}
+
+	handle {
+		basic_auth {
+			{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
+		}
+		reverse_proxy app:8080
+	}
+}

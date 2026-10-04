@@ -20,7 +20,7 @@ func TestNetEffect(t *testing.T) {
 			want: potager.EffectEnriching,
 		},
 		{
-			name:    "moutarde as a cover crop is hungry but returns everything on incorporation",
+			name:    "moutarde as a cover crop is hungry but returns everything on termination",
 			purpose: potager.PurposeCover, demand: potager.DemandLight, fixing: false,
 			want: potager.EffectNeutral,
 		},

@@ -24,8 +24,8 @@ in, when they come out, and whether the succession makes agronomic sense.
 | Templates | `templ` + HTMX, used minimally |
 | Data | Postgres, `sqlc` over hand-written SQL, `goose` migrations. No ORM. |
 | Operations | `log/slog`, `context` throughout, graceful shutdown, env config, wrapped errors, `/healthz` |
-| Deploy | Docker Compose + Caddy on a small VPS, by hand until it is boring |
-| CI | GitHub Actions: vet, staticcheck, tests against a real Postgres, `sqlc diff`, `templ generate --check` |
+| Deploy | Docker Compose + Caddy (HTTPS, basic auth until step 3) on a small VPS. A `migrate` service applies migrations before the app starts. By hand until it is boring |
+| CI | GitHub Actions on `main`, quality gates only (no deploy): vet, staticcheck, tests against a real Postgres, `sqlc diff`, `templ generate --check` |
 
 `sqlc diff` and `templ generate --check` are in CI on purpose: generated code that
 has drifted from its source fails the build instead of rotting quietly.
@@ -68,7 +68,7 @@ families ──< species ──< varieties ──< planting_varieties >── pl
 ### Why a planting holds many varieties
 
 A cover crop mix — trèfle + seigle + radis fourrager — is **one sowing**: one
-date, one incorporation, one decision. Modelling it as three overlapping
+date, one termination, one decision. Modelling it as three overlapping
 plantings would mean three rows that must agree forever, and three passes through
 the form on a phone in the garden.
 
@@ -108,7 +108,7 @@ botany:
 
 The two rows that matter are the ones that a single "nitrogen" enum would have
 got wrong. A **cover crop is terminated before it fruits**, so everything it took
-up returns to the bed on incorporation — moutarde is a hungry plant with a
+up returns to the bed on termination — moutarde is a hungry plant with a
 neutral net effect. A **legume grown for food exports its nitrogen in the seed**,
 so a harvested pea crop enriches far less than its nodules suggest.
 
@@ -137,16 +137,22 @@ catalogue grows.
    in the form), expected harvest date. Four screens: plot list, plot detail,
    plot form, planting form. Deployed by hand and used for real.
 2. **Rotation.** Family interval warnings, nitrogen succession, overlap notices,
-   the multi-variety picker, the backward-derived termination suggestion.
+   the multi-variety picker, the backward-derived termination suggestion. Decide
+   here whether a disease incident on a planting should extend its family's
+   interval; the family interval alone already covers blight on tomatoes.
 3. **Auth.** Users, session cookies, argon2id. `user_id` already exists on
    plantings; plots need one too.
 4. **Season overview and archiving UI.**
 5. **Catalogue CRUD and reusable cover-crop mixes.**
 6. Plot map, spacing advice, whatever the garden asks for.
 
+Later, unscheduled: **harvests** — a table of its own, attached to a planting
+(date, quantity, unit), because a crop is picked many times.
+
 ## Deliberately not doing
 
-Offline/PWA, i18n, a JSON API, an ORM, a DI container, ports-and-adapters,
+Yield on the planting itself (harvests get their own table, later), disease
+tracking before step 2, Offline/PWA, i18n, a JSON API, an ORM, a DI container, ports-and-adapters,
 stored coordinates, planned-vs-actual date pairs, per-variety spacing overrides,
 automated deploys before the first manual one, a table-driven rule engine.
 
