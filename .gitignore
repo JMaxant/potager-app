@@ -11,3 +11,9 @@
 # IDE
 /.idea/
 /.vscode/
+
+# Claude Code: personal settings stay local, agents and skills are shared
+/.claude/settings.local.json
+
+# Test output
+coverage.out

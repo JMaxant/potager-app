@@ -19,6 +19,7 @@ goose migrations · Docker Compose + Caddy.
 ## Documents
 
 - [CONTEXT.md](CONTEXT.md) — the vocabulary
+- [CONTRIBUTING.md](CONTRIBUTING.md) — branches, pull requests, commits
 - [docs/design.md](docs/design.md) — principles, model, derived logic, sequence
 - [docs/step-1-spec.md](docs/step-1-spec.md) — functional specification of step 1
 - [docs/step-1-tasks.md](docs/step-1-tasks.md) — task breakdown of step 1
