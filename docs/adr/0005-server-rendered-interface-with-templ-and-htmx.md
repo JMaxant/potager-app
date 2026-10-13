@@ -1,0 +1,3 @@
+# The interface is rendered by the server with templ and HTMX
+
+Pages are Go components written in templ, compiled to Go and type-checked with the rest of the code, and HTMX adds the two small interactions the first step needs. Vue.js was considered and rejected: it brings a Node toolchain, a bundler and a large dependency tree to maintain, a second language and build pipeline to learn on a project whose purpose is to learn Go, and a JSON API that the design deliberately does not have. templ is light, small to learn and keeps the whole application in one language. Every screen must keep working without JavaScript. Revisit if the application ever needs offline use or a native client.

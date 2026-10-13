@@ -80,7 +80,7 @@ with JavaScript disabled.
 | GET | `/plantings/{id}/delete` | Confirm deletion of a planting |
 | POST | `/plantings/{id}/delete` | Delete planting |
 | GET | `/varieties/options?species_id={id}` | Variety `<select>` options *(HTMX)* |
-| GET | `/healthz` | Liveness + database check |
+| GET | `/health` | Liveness + database check |
 
 HTML forms cannot issue PUT or DELETE, so updates, archives and deletions are
 POST. Plots are archived, never deleted. Plantings are deleted for good, after
@@ -256,7 +256,7 @@ fragment is reachable only through HTMX.
 - Every form control has a `<label for>`; errors are linked with
   `aria-describedby`; the error summary receives focus on failed submission.
 - `lang="fr"` on `<html>`.
-- Caddy terminates HTTPS and enforces HTTP basic auth on every route, `/healthz`
+- Caddy terminates HTTPS and enforces HTTP basic auth on every route, `/health`
   excepted, until step 3 brings real accounts. The app container is not published
   on the host.
 - Requests logged with method, path, status and duration; database errors return
@@ -289,7 +289,7 @@ fragment is reachable only through HTMX.
 13. A planting can be deleted after a confirmation screen; a plot with plantings in
     progress asks for confirmation, counting them, before it is archived.
 14. A closing date after today is refused.
-15. Without credentials, Caddy refuses every route except `/healthz`; the app port
+15. Without credentials, Caddy refuses every route except `/health`; the app port
     is not reachable from outside Compose.
 16. `docker compose up` applies the migrations through the `migrate` service before
     the app starts.
