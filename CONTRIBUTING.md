@@ -10,8 +10,10 @@ work, see [CLAUDE.md](CLAUDE.md).
   once CI exists (S4); until then, keep it green by hand.
 - `scaffold` is a read-only reference: an earlier implementation to compare
   against after a task is done. Never merge it, never commit to it.
-- One branch per issue, named `<issue number>-<short-slug>`, for example
-  `5-go-skeleton`.
+- One branch per issue, named `<type>/<name>_issue_<id>` where the type is
+  `feature`, `fix` or `chore` and the name is the issue title in short
+  snake_case, for example `feature/go_skeleton_issue_5` or
+  `chore/repository_hygiene_issue_1`. Scaffolding and design issues use `chore`.
 
 ## Pull requests
 
