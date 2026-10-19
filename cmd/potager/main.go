@@ -21,7 +21,7 @@ func main() {
 }
 
 func run() error {
-	config, err := loadConfig()
+	config, err := loadConfig(os.Getenv)
 	if err != nil {
 		return fmt.Errorf("config:\n %w", err)
 	}
@@ -34,19 +34,19 @@ func run() error {
 	return nil
 }
 
-func loadConfig() (Config, error) {
-	databaseURL := os.Getenv("DATABASE_URL")
+func loadConfig(getenv func(string) string) (Config, error) {
+	databaseURL := getenv("DATABASE_URL")
 	var errs []error
 
 	if databaseURL == "" {
 		errs = append(errs, errors.New("DATABASE_URL is required"))
 	}
-	listenAddr := os.Getenv("LISTEN_ADDR")
+	listenAddr := getenv("LISTEN_ADDR")
 	if listenAddr == "" {
 		errs = append(errs, errors.New("LISTEN_ADDR is required"))
 	}
 
-	level, err := parseLogLevel(os.Getenv("LOG_LEVEL"))
+	level, err := parseLogLevel(getenv("LOG_LEVEL"))
 
 	if err != nil {
 		errs = append(errs, fmt.Errorf("LOG_LEVEL: %w", err))
