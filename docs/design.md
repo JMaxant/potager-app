@@ -20,7 +20,7 @@ in, when they come out, and whether the succession makes agronomic sense.
 
 | Concern | Choice |
 | --- | --- |
-| Backend | Go 1.25, stdlib `net/http`, dependencies wired by hand in `main.go`. No framework, no DI container. |
+| Backend | Go 1.26, stdlib `net/http`, dependencies wired by hand in `main.go`. No framework, no DI container. |
 | Templates | `templ` + HTMX, used minimally; native CSS, no framework or preprocessor ([ADR 0005](adr/0005-server-rendered-interface-with-templ-and-htmx.md)) |
 | Data | Postgres 18, `sqlc` over hand-written SQL, `goose` migrations. No ORM. |
 | Operations | `log/slog`, `context` throughout, graceful shutdown, env config, wrapped errors, `/health` |
@@ -43,6 +43,22 @@ migrations/       goose migrations, including the seeded catalogue
 Interfaces are declared where they are consumed (`web.Store`), not beside the
 implementation. That is the Go convention and the one most Java-shaped Go
 codebases get backwards.
+
+### Configuration
+
+The binary reads its configuration from the environment only, once, at start-up.
+It never reads `.env` itself: Task loads it in development and Compose passes it
+in production. Configuration is strict: a missing or invalid variable stops the
+process with exit code 1, and every problem is reported at once.
+
+| Variable | Required | Values |
+| --- | --- | --- |
+| `DATABASE_URL` | yes | Postgres connection URL |
+| `LISTEN_ADDR` | yes, no default | `host:port`, for example `:8081` |
+| `LOG_LEVEL` | no, `info` when unset | `debug`, `info`, `warn`, `error` |
+
+`LISTEN_ADDR` has no default on purpose: an empty `http.Server.Addr` means port 80,
+and a silent fallback would hide a forgotten variable.
 
 ## Model
 
