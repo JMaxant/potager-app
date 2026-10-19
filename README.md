@@ -16,6 +16,22 @@ also a Go learning project: the owner writes the code (see [CLAUDE.md](CLAUDE.md
 Go 1.25 (stdlib `net/http`, no framework) · templ + HTMX · Postgres via sqlc ·
 goose migrations · Docker Compose + Caddy.
 
+## Setup
+
+### Prerequisites
+
+- Docker Compose (plugin compose v2)
+
+#### Optional
+
+- `postgresql-client` for troubleshooting
+
+### Getting started
+
+- `cp .env.example .env`
+- `docker compose up -d` launches the postgresql database service
+
+### 
 ## Documents
 
 - [CONTEXT.md](CONTEXT.md) — the vocabulary
