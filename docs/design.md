@@ -22,7 +22,7 @@ in, when they come out, and whether the succession makes agronomic sense.
 | --- | --- |
 | Backend | Go 1.25, stdlib `net/http`, dependencies wired by hand in `main.go`. No framework, no DI container. |
 | Templates | `templ` + HTMX, used minimally; native CSS, no framework or preprocessor ([ADR 0005](adr/0005-server-rendered-interface-with-templ-and-htmx.md)) |
-| Data | Postgres, `sqlc` over hand-written SQL, `goose` migrations. No ORM. |
+| Data | Postgres 18, `sqlc` over hand-written SQL, `goose` migrations. No ORM. |
 | Operations | `log/slog`, `context` throughout, graceful shutdown, env config, wrapped errors, `/health` |
 | Deploy | Docker Compose + Caddy (HTTPS, basic auth until step 3) on a small VPS. A `migrate` service applies migrations before the app starts. By hand until it is boring |
 | CI | GitHub Actions on `main`, quality gates only (no deploy): vet, staticcheck, tests against a real Postgres, `sqlc diff`, `templ generate --check` |
