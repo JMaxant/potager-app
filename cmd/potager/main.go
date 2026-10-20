@@ -1,10 +1,16 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/JMaxant/potager-app/internal/store"
 )
 
 type Config struct {
@@ -30,6 +36,20 @@ func run() error {
 	slog.SetDefault(logger)
 
 	logger.Info("starting server", "listen_addr", config.ListenAddr)
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	connectCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	db, err := store.New(connectCtx, config.DatabaseURL)
+
+	if err != nil {
+		return fmt.Errorf("database: %w", err)
+	}
+
+	defer db.Close()
 
 	return nil
 }
