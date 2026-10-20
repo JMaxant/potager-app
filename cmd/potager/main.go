@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/JMaxant/potager-app/internal/store"
+	"github.com/JMaxant/potager-app/internal/web"
 )
 
 type Config struct {
@@ -35,15 +37,13 @@ func run() error {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: config.LogLevel}))
 	slog.SetDefault(logger)
 
-	logger.Info("starting server", "listen_addr", config.ListenAddr)
-
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	connectCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
 
 	db, err := store.New(connectCtx, config.DatabaseURL)
+	cancel()
 
 	if err != nil {
 		return fmt.Errorf("database: %w", err)
@@ -51,6 +51,38 @@ func run() error {
 
 	defer db.Close()
 
+	logger.Info("starting server", "listen_addr", config.ListenAddr)
+
+	server := web.NewServer(logger, db)
+	srv := &http.Server{
+		Addr:              config.ListenAddr,
+		Handler:           server.Handler(),
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+	errs := make(chan error, 1)
+
+	go func() {
+		logger.Info("listening", "listen_addr", config.ListenAddr)
+		if err := srv.ListenAndServe(); err != nil {
+			errs <- fmt.Errorf("serve: %w", err)
+		}
+	}()
+
+	select {
+	case err := <-errs:
+		return err
+	case <-ctx.Done():
+		logger.Info("shutting down")
+	}
+
+	webCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
+	defer cancel()
+	err = srv.Shutdown(webCtx)
+
+	if err != nil {
+		return fmt.Errorf("shutdown: %w", err)
+	}
 	return nil
 }
 
