@@ -26,7 +26,8 @@ func NewServer(log *slog.Logger, store Store) *Server {
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", s.handleHealth)
-	return mux
+
+	return logRequests(s.log)(mux)
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
