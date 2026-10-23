@@ -13,7 +13,7 @@ also a Go learning project: the owner writes the code (see [CLAUDE.md](CLAUDE.md
 
 ## Stack
 
-Go 1.25 (stdlib `net/http`, no framework) · templ + HTMX · Postgres via sqlc ·
+Go 1.26 (stdlib `net/http`, no framework) · templ + HTMX · Postgres via sqlc ·
 goose migrations · Docker Compose + Caddy.
 
 ## Setup
