@@ -63,7 +63,7 @@ func run() error {
 
 	go func() {
 		logger.Info("listening", "listen_addr", config.ListenAddr)
-		if err := srv.ListenAndServe(); err != nil {
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errs <- fmt.Errorf("serve: %w", err)
 		}
 	}()
