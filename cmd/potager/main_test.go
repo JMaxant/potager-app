@@ -6,13 +6,13 @@ import (
 	"testing"
 )
 
+const dbURL = "postgres://db:db@127.0.0.1:5432/db"
+
 func TestLoadConfig(t *testing.T) {
-	const dbURL = "postgres://db:db@127.0.0.1:5432/db"
 	tests := []struct {
-		name    string
-		env     map[string]string
-		want    Config
-		wantErr []string
+		name string
+		env  map[string]string
+		want Config
 	}{
 		{
 			name: "all variables set",
@@ -39,6 +39,29 @@ func TestLoadConfig(t *testing.T) {
 				LogLevel:    slog.LevelInfo,
 			},
 		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			getenv := func(key string) string { return tt.env[key] }
+			cfg, err := loadConfig(getenv)
+
+			if err != nil {
+				t.Fatal(err)
+			}
+			if cfg != tt.want {
+				t.Errorf("got %+v, want %+v", cfg, tt.want)
+			}
+		})
+	}
+}
+
+func TestLoadConfigErrors(t *testing.T) {
+	tests := []struct {
+		name    string
+		env     map[string]string
+		wantErr []string
+	}{
 		{
 			name: "missing database url",
 			env: map[string]string{
@@ -73,24 +96,26 @@ func TestLoadConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			getenv := func(key string) string { return tt.env[key] }
-			cfg, err := loadConfig(getenv)
+			getenv := func(key string) string {
+				return tt.env[key]
+			}
+			_, err := loadConfig(getenv)
 
-			if len(tt.wantErr) == 0 {
-				if err != nil {
-					t.Fatal(err)
-				}
-				if cfg != tt.want {
-					t.Errorf("got %+v, want %+v", cfg, tt.want)
-				}
-			} else {
-				if err == nil {
-					t.Fatal("expected error")
-				}
-				for _, substr := range tt.wantErr {
-					if !strings.Contains(err.Error(), substr) {
-						t.Errorf("got error %q, want to contain %q", err.Error(), substr)
-					}
+			if err == nil {
+				t.Fatal("expected error")
+			}
+
+			joined, ok := err.(interface{ Unwrap() []error })
+			if !ok {
+				t.Fatalf("error %T does not wrap several errors", err)
+			}
+			if got := len(joined.Unwrap()); got != len(tt.wantErr) {
+				t.Errorf("got %d errors, want %d: %v", got, len(tt.wantErr), err)
+			}
+
+			for _, substr := range tt.wantErr {
+				if !strings.Contains(err.Error(), substr) {
+					t.Errorf("got error %q, want to contain %q", err.Error(), substr)
 				}
 			}
 		})
