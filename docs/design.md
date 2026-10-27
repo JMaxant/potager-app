@@ -60,6 +60,21 @@ process with exit code 1, and every problem is reported at once.
 `LISTEN_ADDR` has no default on purpose: an empty `http.Server.Addr` means port 80,
 and a silent fallback would hide a forgotten variable.
 
+### Request logging
+
+`internal/web/middleware.go` holds the middleware, and `Server.Handler()` wraps
+the router with it, so every route is covered without each handler logging on
+its own. One `slog` line per request, written after the handler returns: method,
+path, status and duration.
+
+Go does not expose the status code a handler wrote, so the middleware passes the
+handler a `statusRecorder` that wraps the real `http.ResponseWriter` and notes
+the first `WriteHeader`. The status starts at 200, because a handler that writes
+a body without calling `WriteHeader` has sent a 200. The recorder also has an
+`Unwrap` method: without it, `http.ResponseController` (flush, deadlines) could
+not reach the real writer through the wrapper. A middleware added later, such
+as authentication in step 3, must keep that property.
+
 ## Model
 
 ```

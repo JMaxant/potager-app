@@ -82,6 +82,10 @@ with JavaScript disabled.
 | GET | `/varieties/options?species_id={id}` | Variety `<select>` options *(HTMX)* |
 | GET | `/health` | Liveness + database check |
 
+`GET /health` answers `200` with the plain-text body `ok` when Postgres replies
+to a ping within 2 seconds. Otherwise it answers `503` with `health check failed`
+and logs the cause. It is the one route Caddy leaves open without credentials.
+
 HTML forms cannot issue PUT or DELETE, so updates, archives and deletions are
 POST. Plots are archived, never deleted. Plantings are deleted for good, after
 a confirmation screen: they carry no data worth keeping beyond what a mistaken

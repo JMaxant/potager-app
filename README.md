@@ -20,7 +20,17 @@ goose migrations · Docker Compose + Caddy.
 
 ### Prerequisites
 
+- Go 1.26
 - Docker Compose (plugin compose v2)
+- [Task](https://taskfile.dev/installation/)
+- The Go tools below, installed once:
+
+```sh
+go install github.com/pressly/goose/v3/cmd/goose@latest
+go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+go install github.com/a-h/templ/cmd/templ@latest
+go install honnef.co/go/tools/cmd/staticcheck@latest
+```
 
 #### Optional
 
@@ -29,9 +39,10 @@ goose migrations · Docker Compose + Caddy.
 ### Getting started
 
 - `cp .env.example .env`
-- `docker compose up -d` launches the postgresql database service
+- `task up` starts the Postgres service and waits until it is healthy
+- `task run` starts the server; in another terminal, `curl localhost:8081/health` answers `ok` once the database is reachable
+- `task --list` shows every command; `task check` runs what CI runs
 
-### 
 ## Documents
 
 - [CONTEXT.md](CONTEXT.md) — the vocabulary
