@@ -99,8 +99,10 @@ func TestLoadConfigErrors(t *testing.T) {
 			getenv := func(key string) string {
 				return tt.env[key]
 			}
-			_, err := loadConfig(getenv)
-
+			cfg, err := loadConfig(getenv)
+			if cfg != (Config{}) {
+				t.Errorf("got %+v, want empty config", cfg)
+			}
 			if err == nil {
 				t.Fatal("expected error")
 			}

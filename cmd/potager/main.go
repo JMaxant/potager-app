@@ -104,13 +104,17 @@ func loadConfig(getenv func(string) string) (Config, error) {
 		errs = append(errs, fmt.Errorf("LOG_LEVEL: %w", err))
 	}
 
+	if len(errs) > 0 {
+		return Config{}, errors.Join(errs...)
+	}
+
 	config := Config{
 		DatabaseURL: databaseURL,
 		ListenAddr:  listenAddr,
 		LogLevel:    level,
 	}
 
-	return config, errors.Join(errs...)
+	return config, nil
 }
 
 func parseLogLevel(level string) (slog.Level, error) {
