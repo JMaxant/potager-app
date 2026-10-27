@@ -75,3 +75,21 @@ func TestLogRequests(t *testing.T) {
 		})
 	}
 }
+
+func TestStatusRecorder_Unwrap(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	writer := &statusRecorder{
+		ResponseWriter: recorder,
+		status:         http.StatusOK,
+	}
+
+	err := http.NewResponseController(writer).Flush()
+
+	if err != nil {
+		t.Errorf("error flushing recorder: %v", err)
+	}
+
+	if !recorder.Flushed {
+		t.Error("flush did not reach the underlying writer")
+	}
+}

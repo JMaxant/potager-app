@@ -11,21 +11,6 @@ type Store interface {
 	Ping(ctx context.Context) error
 }
 
-type statusRecorder struct {
-	http.ResponseWriter
-	status      int
-	wroteHeader bool
-}
-
-func (r *statusRecorder) WriteHeader(code int) {
-	if r.wroteHeader {
-		return
-	}
-	r.wroteHeader = true
-	r.status = code
-	r.ResponseWriter.WriteHeader(code)
-}
-
 type Server struct {
 	store Store
 	log   *slog.Logger
