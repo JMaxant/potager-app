@@ -39,6 +39,58 @@ func TestLoadConfig(t *testing.T) {
 				LogLevel:    slog.LevelInfo,
 			},
 		},
+		{
+			name: "log level warn",
+			env: map[string]string{
+				"DATABASE_URL": dbURL,
+				"LISTEN_ADDR":  ":8081",
+				"LOG_LEVEL":    "warn",
+			},
+			want: Config{
+				DatabaseURL: dbURL,
+				ListenAddr:  ":8081",
+				LogLevel:    slog.LevelWarn,
+			},
+		},
+		{
+			name: "log level error",
+			env: map[string]string{
+				"DATABASE_URL": dbURL,
+				"LISTEN_ADDR":  ":8081",
+				"LOG_LEVEL":    "error",
+			},
+			want: Config{
+				DatabaseURL: dbURL,
+				ListenAddr:  ":8081",
+				LogLevel:    slog.LevelError,
+			},
+		},
+		{
+			name: "log level uppercase",
+			env: map[string]string{
+				"DATABASE_URL": dbURL,
+				"LISTEN_ADDR":  ":8081",
+				"LOG_LEVEL":    "INFO",
+			},
+			want: Config{
+				DatabaseURL: dbURL,
+				ListenAddr:  ":8081",
+				LogLevel:    slog.LevelInfo,
+			},
+		},
+		{
+			name: "log level capitalized",
+			env: map[string]string{
+				"DATABASE_URL": dbURL,
+				"LISTEN_ADDR":  ":8081",
+				"LOG_LEVEL":    "Debug",
+			},
+			want: Config{
+				DatabaseURL: dbURL,
+				ListenAddr:  ":8081",
+				LogLevel:    slog.LevelDebug,
+			},
+		},
 	}
 
 	for _, tt := range tests {
