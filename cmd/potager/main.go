@@ -35,7 +35,6 @@ func run() error {
 	}
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: config.LogLevel}))
-	slog.SetDefault(logger)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -58,6 +57,7 @@ func run() error {
 		Addr:              config.ListenAddr,
 		Handler:           server.Handler(),
 		ReadHeaderTimeout: 5 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 	errs := make(chan error, 1)
 
