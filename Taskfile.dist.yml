@@ -14,7 +14,25 @@ tasks:
     cmd: task --list
 
   init:
+    desc: Inits local environement.
+    cmds:
+      - task: init:env
+      - task: init:hooks
+
+  init:hooks:
+    desc: Inits lefthook.
+    aliases:
+      - hooks
+    cmd: "{{.TOOLS}} lefthook install"
+
+  init:env:
     desc: Copies .env.example to .env.
+    aliases:
+      - env
+    sources:
+      - .env.example
+    generates:
+      - .env
     cmd: cp .env.example .env
 
   up:

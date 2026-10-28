@@ -32,7 +32,7 @@ jobs:
       - name: Runs linter.
         run: task lint
       - name: Launches Postgres.
-        run: task init && task up
+        run: task init:env && task up
       - name: Runs migrations.
         if: hashFiles('migrations/*.sql')
         run: task migrate

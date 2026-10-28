@@ -7,7 +7,7 @@
 
 # Local environment
 .env
-
+.task/
 # IDE
 /.idea/
 /.vscode/

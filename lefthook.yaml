@@ -1,0 +1,6 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: Checks formatting.
+      glob: "*.go"
+      run: test -z "$(gofmt -l {staged_files})"
