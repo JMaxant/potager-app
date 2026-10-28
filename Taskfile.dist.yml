@@ -12,6 +12,11 @@ vars:
 tasks:
   default:
     cmd: task --list
+
+  init:
+    desc: Copies .env.example to .env.
+    cmd: cp .env.example .env
+
   up:
     desc: Start Postgres locally
     cmd: "{{.COMPOSE}} up -d --wait db"

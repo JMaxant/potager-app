@@ -24,3 +24,5 @@ jobs:
           version: 3.x
       - name: Runs linter.
         run: task lint
+      - name: Launch Postgres.
+        run: task init && task up
