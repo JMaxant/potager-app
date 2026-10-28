@@ -23,14 +23,10 @@ goose migrations · Docker Compose + Caddy.
 - Go 1.26
 - Docker Compose (plugin compose v2)
 - [Task](https://taskfile.dev/installation/)
-- The Go tools below, installed once:
 
-```sh
-go install github.com/pressly/goose/v3/cmd/goose@latest
-go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-go install github.com/a-h/templ/cmd/templ@latest
-go install honnef.co/go/tools/cmd/staticcheck@latest
-```
+goose, sqlc, templ and staticcheck need no installation. Their versions are
+pinned in [`tools.mod`](tools.mod) and `task` runs them with `go tool`, so the
+first task that needs one downloads it (network required, a little slower once).
 
 #### Optional
 

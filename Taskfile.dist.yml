@@ -7,6 +7,7 @@ dotenv: ['.env']
 
 vars:
   COMPOSE: docker compose
+  TOOLS: go tool -modfile=tools.mod
 
 tasks:
   default:
@@ -25,17 +26,17 @@ tasks:
 
   migrate:
     desc: Apply migrations
-    cmd: goose -dir migrations postgres "$DATABASE_URL" up
+    cmd: "{{.TOOLS}} goose -dir migrations postgres \"$DATABASE_URL\" up"
 
   migrate:down:
     desc: Roll back the last migration
-    cmd: goose -dir migrations postgres "$DATABASE_URL" down
+    cmd: "{{.TOOLS}} goose -dir migrations postgres \"$DATABASE_URL\" down"
 
   generate:
     desc: Regenerate sqlc and templ output
     cmds:
-      - sqlc generate
-      - templ generate
+      - "{{.TOOLS}} sqlc generate"
+      - "{{.TOOLS}} templ generate"
 
   run:
     desc: Run the server
@@ -49,12 +50,12 @@ tasks:
     desc: Vet and static analysis
     cmds:
       - go vet ./...
-      - staticcheck ./...
+      - "{{.TOOLS}} staticcheck ./..."
 
   check:
     desc: Everything CI runs, note that it will fail until CI is properly implemented.
     cmds:
       - task: lint
       - task: test
-      - sqlc diff
-      - templ generate --check
+      - "{{.TOOLS}} sqlc diff"
+      - "{{.TOOLS}} templ generate --check"
