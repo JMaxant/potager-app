@@ -30,6 +30,8 @@ tasks:
     cmd: "{{.COMPOSE}} ps"
 
   migrate:
+    aliases:
+      - migrate:up
     desc: Apply migrations
     cmd: "{{.TOOLS}} goose -dir migrations postgres \"$DATABASE_URL\" up"
 
@@ -47,6 +49,17 @@ tasks:
     desc: Run the server
     cmd: go run ./cmd/potager
 
+  check:
+    aliases:
+      - check:all
+      - qa
+    desc: Everything CI runs, note that it will fail until CI is properly implemented.
+    cmds:
+      - task: lint
+      - task: test
+      - task: check:sqlc
+      - task: check:templ
+
   test:
     desc: Run the test suite
     cmd: go test -race ./...
@@ -57,10 +70,10 @@ tasks:
       - go vet ./...
       - "{{.TOOLS}} staticcheck ./..."
 
-  check:
-    desc: Everything CI runs, note that it will fail until CI is properly implemented.
-    cmds:
-      - task: lint
-      - task: test
-      - "{{.TOOLS}} sqlc diff"
-      - "{{.TOOLS}} templ generate --check"
+  check:sqlc:
+    desc: SQLC generated files check.
+    cmd: "{{.TOOLS}} sqlc diff"
+
+  check:templ:
+    desc: Templ generated files check.
+    cmd: "{{.TOOLS}} templ generate --check"

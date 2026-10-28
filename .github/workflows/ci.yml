@@ -34,3 +34,9 @@ jobs:
         run: task migrate
       - name: Runs tests.
         run: task test
+      - name: Checks sql generated files.
+        if: hashFiles('sqlc.yaml')
+        run: task check:sqlc
+      - name: Checks templ generated files.
+        if: hashFiles('**/*.templ')
+        run: task check:templ
