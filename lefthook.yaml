@@ -3,4 +3,12 @@ pre-commit:
   jobs:
     - name: Checks formatting.
       glob: "*.go"
-      run: test -z "$(gofmt -l {staged_files})"
+      run: |
+        files=$(gofmt -l {staged_files})
+        if [ -n "$files" ]; then
+          echo "Bad formatting on files :"
+          echo "$files" | sed 's/^/  - /'
+          echo
+          echo "fix with : gofmt -w $(echo $files)"
+          exit 1
+        fi
