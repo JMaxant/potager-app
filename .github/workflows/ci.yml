@@ -27,5 +27,10 @@ jobs:
           version: 3.x
       - name: Runs linter.
         run: task lint
-      - name: Launch Postgres.
+      - name: Launches Postgres.
         run: task init && task up
+      - name: Runs migrations.
+        if: hashFiles('migrations/*sql')
+        run: task migrate
+      - name: Runs tests.
+        run: task test
