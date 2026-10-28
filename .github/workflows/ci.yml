@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -30,7 +34,7 @@ jobs:
       - name: Launches Postgres.
         run: task init && task up
       - name: Runs migrations.
-        if: hashFiles('migrations/*sql')
+        if: hashFiles('migrations/*.sql')
         run: task migrate
       - name: Runs tests.
         run: task test
