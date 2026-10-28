@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:${POSTGRES_VERSION-18}-alpine
+    image: postgres:${POSTGRES_VERSION:?POSTGRES_VERSION must be set in .env}-alpine
     environment:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
