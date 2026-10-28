@@ -29,10 +29,8 @@ tasks:
     desc: Copies .env.example to .env.
     aliases:
       - env
-    sources:
-      - .env.example
-    generates:
-      - .env
+    status:
+      - test -f .env
     cmd: cp .env.example .env
 
   up:
