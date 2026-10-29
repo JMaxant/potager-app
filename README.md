@@ -41,7 +41,7 @@ first task that needs one downloads it (network required, a little slower once).
 
 ### Git hooks
 
-[Lefthook](https://lefthook.dev/) runs two hooks, configured in [`lefthook.yaml`](lefthook.yaml)
+[Lefthook](https://lefthook.dev/) runs two hooks, configured in [`lefthook.yml`](lefthook.yml)
 and installed by `task init` (or `task hooks` alone):
 
 - `pre-commit` refuses staged Go files that `gofmt` would change

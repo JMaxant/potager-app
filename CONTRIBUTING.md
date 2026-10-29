@@ -38,6 +38,9 @@ work, see [CLAUDE.md](CLAUDE.md).
 - `task check` runs what CI runs. The `pre-commit` and `pre-push` hooks run a
   subset of it, can be skipped with `--no-verify`, and never replace CI. See
   the Git hooks section of the [README](README.md).
+- There is no `commit-msg` hook: the commit format above is a convention, not
+  something to enforce. Branch commits are working notes, and only the title of
+  the squashed commit survives.
 
 ## Documentation
 
