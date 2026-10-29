@@ -34,10 +34,29 @@ first task that needs one downloads it (network required, a little slower once).
 
 ### Getting started
 
-- `cp .env.example .env`
+- `task init` creates `.env` from `.env.example` (an existing `.env` is never overwritten) and installs the Git hooks
 - `task up` starts the Postgres service and waits until it is healthy
 - `task run` starts the server; in another terminal, `curl localhost:8081/health` answers `ok` once the database is reachable
 - `task --list` shows every command; `task check` runs what CI runs
+
+### Git hooks
+
+[Lefthook](https://lefthook.dev/) runs two hooks, configured in [`lefthook.yaml`](lefthook.yaml)
+and installed by `task init` (or `task hooks` alone):
+
+- `pre-commit` refuses staged Go files that `gofmt` would change
+- `pre-push` runs `task lint`, then `task test`, and stops at the first failure
+
+The hooks are a convenience, not a gate: `git commit --no-verify` and
+`git push --no-verify` skip them. CI runs the same checks and has the last word.
+
+Two things to know:
+
+- The installed hook script embeds the path of the pinned Lefthook in the Go
+  build cache. After `go clean -cache` or a Lefthook version bump, run
+  `task hooks` again.
+- If a `lefthook` is already in your `PATH`, the hook uses it instead of the
+  pinned version (Lefthook is pinned in `tools.mod` like the other tools).
 
 ## Documents
 

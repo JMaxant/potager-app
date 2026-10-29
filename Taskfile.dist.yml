@@ -14,7 +14,7 @@ tasks:
     cmd: task --list
 
   init:
-    desc: Inits local environement.
+    desc: Inits local environment.
     cmds:
       - task: init:env
       - task: init:hooks
@@ -69,7 +69,7 @@ tasks:
     aliases:
       - check:all
       - qa
-    desc: Everything CI runs, note that it will fail until CI is properly implemented.
+    desc: Everything CI runs, note that it will fail until sqlc is fully implemented.
     cmds:
       - task: lint
       - task: test

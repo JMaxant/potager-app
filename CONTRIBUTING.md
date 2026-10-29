@@ -32,6 +32,13 @@ work, see [CLAUDE.md](CLAUDE.md).
 - A body only when the *why* is not obvious from the diff.
 - Inside a branch, commit as often as is useful; the squash tidies up.
 
+## Checks
+
+- `task init` once after cloning: it creates `.env` and installs the Git hooks.
+- `task check` runs what CI runs. The `pre-commit` and `pre-push` hooks run a
+  subset of it, can be skipped with `--no-verify`, and never replace CI. See
+  the Git hooks section of the [README](README.md).
+
 ## Documentation
 
 - The spec, `docs/design.md`, `CONTEXT.md` and the ADRs are the source of
