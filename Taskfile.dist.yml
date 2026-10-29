@@ -12,6 +12,27 @@ vars:
 tasks:
   default:
     cmd: task --list
+
+  init:
+    desc: Inits local environment.
+    cmds:
+      - task: init:env
+      - task: init:hooks
+
+  init:hooks:
+    desc: Inits lefthook.
+    aliases:
+      - hooks
+    cmd: "{{.TOOLS}} lefthook install"
+
+  init:env:
+    desc: Copies .env.example to .env.
+    aliases:
+      - env
+    status:
+      - test -f .env
+    cmd: cp .env.example .env
+
   up:
     desc: Start Postgres locally
     cmd: "{{.COMPOSE}} up -d --wait db"
@@ -25,6 +46,8 @@ tasks:
     cmd: "{{.COMPOSE}} ps"
 
   migrate:
+    aliases:
+      - migrate:up
     desc: Apply migrations
     cmd: "{{.TOOLS}} goose -dir migrations postgres \"$DATABASE_URL\" up"
 
@@ -42,6 +65,17 @@ tasks:
     desc: Run the server
     cmd: go run ./cmd/potager
 
+  check:
+    aliases:
+      - check:all
+      - qa
+    desc: Everything CI runs, note that it will fail until sqlc is fully implemented.
+    cmds:
+      - task: lint
+      - task: test
+      - task: check:sqlc
+      - task: check:templ
+
   test:
     desc: Run the test suite
     cmd: go test -race ./...
@@ -52,10 +86,10 @@ tasks:
       - go vet ./...
       - "{{.TOOLS}} staticcheck ./..."
 
-  check:
-    desc: Everything CI runs, note that it will fail until CI is properly implemented.
-    cmds:
-      - task: lint
-      - task: test
-      - "{{.TOOLS}} sqlc diff"
-      - "{{.TOOLS}} templ generate --check"
+  check:sqlc:
+    desc: SQLC generated files check.
+    cmd: "{{.TOOLS}} sqlc diff"
+
+  check:templ:
+    desc: Templ generated files check.
+    cmd: "{{.TOOLS}} templ generate --check"

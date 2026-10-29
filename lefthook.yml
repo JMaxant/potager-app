@@ -1,0 +1,22 @@
+pre-commit:
+  jobs:
+    - name: Checks formatting.
+      glob: "*.go"
+      run: |
+        files=$(gofmt -l {staged_files})
+        if [ -n "$files" ]; then
+          echo "Bad formatting on files :"
+          echo "$files" | sed 's/^/  - /'
+          echo
+          echo "fix with : gofmt -w $(echo $files)"
+          exit 1
+        fi
+
+pre-push:
+  piped: true
+  jobs:
+    - name: Runs linters.
+      run: task lint
+    - name: Executes tests.
+      run: task test
+

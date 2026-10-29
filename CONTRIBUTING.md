@@ -32,6 +32,34 @@ work, see [CLAUDE.md](CLAUDE.md).
 - A body only when the *why* is not obvious from the diff.
 - Inside a branch, commit as often as is useful; the squash tidies up.
 
+## Checks
+
+- `task init` once after cloning: it creates `.env` and installs the Git hooks.
+- `task check` runs what CI runs. The `pre-commit` and `pre-push` hooks run a
+  subset of it, can be skipped with `--no-verify`, and never replace CI. See
+  the Git hooks section of the [README](README.md).
+- There is no `commit-msg` hook: the commit format above is a convention, not
+  something to enforce. Branch commits are working notes, and only the title of
+  the squashed commit survives.
+
+## Continuous integration
+
+[`ci.yml`](.github/workflows/ci.yml) runs on every pull request and on every push
+to `main`, as one job, `quality`. It drives the same Task targets as `task check`:
+
+1. `task lint` (`go vet`, staticcheck)
+2. `task init:env` and `task up` start Postgres, only if a migration exists
+3. `task migrate`, only if a migration exists
+4. `task test`
+5. `task check:sqlc`, only if `sqlc.yaml` exists
+6. `task check:templ`, only if a `.templ` file exists
+
+The conditional steps use `hashFiles(...)`, so they switch on by themselves when
+their input is added; a skipped step is grey, not green. A new push to the same
+branch cancels the running pull request run, never a run on `main`. The reasons
+for one job with conditional steps are in
+[ADR 0007](docs/adr/0007-ci-is-one-job-with-conditional-steps.md).
+
 ## Documentation
 
 - The spec, `docs/design.md`, `CONTEXT.md` and the ADRs are the source of

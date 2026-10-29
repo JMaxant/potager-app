@@ -1,0 +1,47 @@
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkouts project.
+        uses: actions/checkout@v7
+      - name: Installs go.
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache-dependency-path: |
+            go.sum
+            tools.sum
+      - name: Installs task.
+        uses: go-task/setup-task@v2
+        with:
+          version: 3.x
+      - name: Runs linter.
+        run: task lint
+      - name: Launches Postgres.
+        if: hashFiles('migrations/*.sql')
+        run: task init:env && task up
+      - name: Runs migrations.
+        if: hashFiles('migrations/*.sql')
+        run: task migrate
+      - name: Runs tests.
+        run: task test
+      - name: Checks sql generated files.
+        if: hashFiles('sqlc.yaml')
+        run: task check:sqlc
+      - name: Checks templ generated files.
+        if: hashFiles('**/*.templ')
+        run: task check:templ
