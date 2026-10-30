@@ -1,5 +1,7 @@
 package potager
 
+import "fmt"
+
 type Purpose string
 
 const (
@@ -24,7 +26,7 @@ const (
 	EffectEnriching         Effect = "enriching"
 )
 
-// NetEffect calculates the net effect of a crop on the soil.
+// NetEffect calculates the net effect of a crop on the soil. May panic if provided invalid demand or purpose.
 func NetEffect(purpose Purpose, fixesNitrogen bool, demand Demand) Effect {
 	switch {
 	case purpose == PurposeCover && fixesNitrogen:
@@ -39,10 +41,13 @@ func NetEffect(purpose Purpose, fixesNitrogen bool, demand Demand) Effect {
 	case purpose == PurposeFood && demand == DemandHeavy:
 		return EffectDepleting
 
-	case purpose == PurposeFood:
+	case purpose == PurposeFood && (demand == DemandLight || demand == DemandModerate):
 		return EffectSlightlyDepleting
 
+	case purpose == PurposeFood:
+		panic(fmt.Sprintf("NetEffect: unknown demand %q", demand))
+
 	default:
-		panic("todo msg")
+		panic(fmt.Sprintf("NetEffect: unknown purpose %q", purpose))
 	}
 }
