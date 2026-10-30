@@ -83,6 +83,12 @@ func TestNetEffectPanics(t *testing.T) {
 			fixesNitrogen: false,
 			demand:        "Huge",
 		},
+		{
+			name:          "a food crop with an empty demand panics",
+			purpose:       PurposeFood,
+			fixesNitrogen: false,
+			demand:        "",
+		},
 	}
 
 	for _, tt := range tests {
