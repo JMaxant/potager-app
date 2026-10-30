@@ -41,41 +41,64 @@ owner writes the remaining cases, then the implementation.
 - [ ] Before deploying (T11): `import _ "time/tzdata"`, because a minimal Docker
       image has no tzdata.
 
-## Current step: `TestSeason`
+## Done so far
 
-File: `internal/potager/season_test.go` (or `date_test.go`). Rule: *« Season is
-the year of `ended_at` »*, used only for closed plantings (history section).
+`Date` (`DateFromTime`, `DateFromInt`, `String`, `addDays`, `before`), `Season`.
 
-Signature: `func Season(endedAt Date) int`. No `Planting` type yet; the caller
-only asks for the season of a closed planting, so there is no optional value to
-handle here. The optional `ended_at` comes with `Status`.
+## Current step: `TestNetEffect`
 
-Cases:
+File: `internal/potager/neteffect.go` and `neteffect_test.go`. Rule: the table
+in `docs/design.md` (*Net soil effect*). No dates involved.
 
-1. **(model)** AC 8 : ail semé le 12/10/2025, récolté le 04/07/2026 → **2026** (seule la fin compte).
-2. Fin le 01/01/2026 → **2026**.
-3. Fin le 31/12/2025 → **2025**.
+New concept: **enumerations in Go** — a named type plus constants.
+`type Purpose string` with `const PurposeFood Purpose = "food"`. String-based
+rather than `iota`, because the values mirror the Postgres columns
+(`plantings.purpose`, `species.nitrogen_demand`) and read well in test output.
+
+Types (names to confirm):
+
+- `Purpose`: `PurposeFood`, `PurposeCover`.
+- `Demand`: `DemandHeavy`, `DemandModerate`, `DemandLight`.
+- `Effect`: `EffectEnriching`, `EffectNeutral`, `EffectSlightlyDepleting`, `EffectDepleting`.
+
+Signature: `func NetEffect(purpose Purpose, fixesNitrogen bool, demand Demand) Effect`.
+`fixesNitrogen` comes from `families.nitrogen_fixing`. One species at a time;
+a mix of several varieties comes later.
+
+Cases (one per table row, plus the "any" that matters):
+
+1. **(model)** Engrais vert fixateur (féverole) → **enriching**.
+2. Engrais vert non fixateur, gourmand (moutarde) → **neutral**.
+3. Vivrier fixateur (pois récolté), même gourmand → **neutral**.
+4. Vivrier non fixateur, gourmand (tomate) → **depleting**.
+5. Vivrier non fixateur, moyen → **slightly depleting**.
+6. Vivrier non fixateur, faible → **slightly depleting**.
 
 Model case:
 
 ```go
-func TestSeason(t *testing.T) {
+func TestNetEffect(t *testing.T) {
 	tests := []struct {
-		name    string
-		endedAt Date
-		want    int
+		name          string
+		purpose       Purpose
+		fixesNitrogen bool
+		demand        Demand
+		want          Effect
 	}{
 		{
-			name:    "garlic sown in October 2025 and lifted in July 2026 is season 2026 (AC 8)",
-			endedAt: DateFromInt(2026, time.July, 4),
-			want:    2026,
+			name:          "a nitrogen-fixing cover crop enriches the bed",
+			purpose:       PurposeCover,
+			fixesNitrogen: true,
+			demand:        DemandModerate,
+			want:          EffectEnriching,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Season(tt.endedAt)
+			got := NetEffect(tt.purpose, tt.fixesNitrogen, tt.demand)
 			if got != tt.want {
-				t.Errorf("Season(%v) = %d, want %d", tt.endedAt, got, tt.want)
+				t.Errorf("NetEffect(%v, %v, %v) = %v, want %v",
+					tt.purpose, tt.fixesNitrogen, tt.demand, got, tt.want)
 			}
 		})
 	}
@@ -84,9 +107,71 @@ func TestSeason(t *testing.T) {
 
 **Done when:**
 
-- `go test ./internal/potager/ -run TestSeason -v`: **3 cases, all PASS**.
-- **Sabotage:** `endedAt.addDays(-1).t.Year()`. Only case 2 fails. Explain why.
+- `go test ./internal/potager/ -run TestNetEffect -v`: **6 cases, all PASS**.
+- **Sabotage 1:** a fixing species always enriches, whatever its purpose. Only
+  case 3 fails: the row a single "nitrogen" enum would get wrong.
+- **Sabotage 2:** `moderate` treated like `heavy`. Only case 5 fails.
+
+## Where `NetEffect` stands (to pick up here)
+
+Done: the three types, `NetEffect` as a flat `switch` (one `case` per table
+row, `default` panics), 6 table cases passing.
+
+To do, in order:
+
+- [ ] **`TestNetEffect`**: cases 2 and 3 back to `DemandHeavy` (moutarde, pois
+      récolté), as planned. With `DemandModerate` they would not catch a
+      `switch demand` back in the cover branch.
+- [ ] Remove the `"an invalid value is passed to NetEffect"` case from the
+      table: it has no `want` and makes the whole test panic.
+      Check: `go test ./internal/potager/ -run 'TestNetEffect$' -v` → **6 PASS**.
+- [ ] **`TestNetEffectPanics`**, a separate test, `defer` + `recover`
+      (Go blog *Defer, Panic, and Recover*; spec *Handling panics*):
+  1. **(model)** `purpose` inconnu (`"orchard"`) → panic.
+  2. `purpose` vide `""` (colonne `NULL` mal lue) → panic.
+  3. Vivrier non fixateur, `demand` vide `""` → panic. **Fails at first**: the
+     `case purpose == PurposeFood:` line catches every demand.
+
+  ```go
+  func TestNetEffectPanics(t *testing.T) {
+  	tests := []struct {
+  		name          string
+  		purpose       Purpose
+  		fixesNitrogen bool
+  		demand        Demand
+  	}{
+  		{
+  			name:          "an unknown purpose panics",
+  			purpose:       Purpose("orchard"),
+  			fixesNitrogen: false,
+  			demand:        DemandHeavy,
+  		},
+  	}
+  	for _, tt := range tests {
+  		t.Run(tt.name, func(t *testing.T) {
+  			defer func() {
+  				if r := recover(); r == nil {
+  					t.Errorf("NetEffect(%q, %v, %q) did not panic",
+  						tt.purpose, tt.fixesNitrogen, tt.demand)
+  				}
+  			}()
+  			NetEffect(tt.purpose, tt.fixesNitrogen, tt.demand)
+  		})
+  	}
+  }
+  ```
+
+- [ ] **Green**: write the last food line with explicit values,
+      `demand == DemandModerate || demand == DemandLight`.
+      Check: `go test ./internal/potager/ -run TestNetEffectPanics -v` → **3 PASS**.
+- [ ] Panic message: lower case, with the values through `fmt.Sprintf` and
+      `%q`, e.g. `netEffect: unknown purpose "orchard" or demand ""`.
+- [ ] **Sabotage**: `default` returns `EffectNeutral` instead of panicking →
+      cases 1 and 2 fail with "did not panic". Restore.
+- [ ] The two sabotages planned above for the table (fixing always enriches;
+      moderate treated as heavy).
+- [ ] Commit (`refs #8`, with the `#`).
 
 ## Next step
 
-`NetEffect`, the table in `docs/design.md`.
+`ExpectedEnd`: stored value, `maturity_from`, cover crop. First optional value.
