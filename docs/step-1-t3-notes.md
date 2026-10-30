@@ -43,9 +43,9 @@ owner writes the remaining cases, then the implementation.
 
 ## Done so far
 
-`Date` (`DateFromTime`, `DateFromInt`, `String`, `addDays`, `before`), `Season`.
+`Date` (`DateFromTime`, `DateFromInt`, `String`, `IsZero`, `addDays`, `before`), `Season`, `NetEffect`. In progress: `ExpectedEnd` (see "Pick up here" below).
 
-## Current step: `TestNetEffect`
+## `NetEffect` plan (done, kept for reference)
 
 File: `internal/potager/neteffect.go` and `neteffect_test.go`. Rule: the table
 in `docs/design.md` (*Net soil effect*). No dates involved.
@@ -112,67 +112,23 @@ func TestNetEffect(t *testing.T) {
   case 3 fails: the row a single "nitrogen" enum would get wrong.
 - **Sabotage 2:** `moderate` treated like `heavy`. Only case 5 fails.
 
-## Where `NetEffect` stands (to pick up here)
+## Where `NetEffect` stands: done
 
-Done: the three types, `NetEffect` as a flat `switch` (one `case` per table
-row, `default` panics), 6 table cases passing.
+`NetEffect` as a flat `switch`, one `case` per table row. Two panics with their
+own message (`fmt.Sprintf` + `%q`): `NetEffect: unknown demand` for a food crop
+whose demand matched no row, `NetEffect: unknown purpose` in the `default`.
+`TestNetEffect` 6 cases, `TestNetEffectPanics` 3 cases (unknown purpose, unknown
+demand, empty demand), sabotages done, committed.
 
-To do, in order:
+Left over, small:
 
-- [ ] **`TestNetEffect`**: cases 2 and 3 back to `DemandHeavy` (moutarde, pois
-      récolté), as planned. With `DemandModerate` they would not catch a
-      `switch demand` back in the cover branch.
-- [ ] Remove the `"an invalid value is passed to NetEffect"` case from the
-      table: it has no `want` and makes the whole test panic.
-      Check: `go test ./internal/potager/ -run 'TestNetEffect$' -v` → **6 PASS**.
-- [ ] **`TestNetEffectPanics`**, a separate test, `defer` + `recover`
-      (Go blog *Defer, Panic, and Recover*; spec *Handling panics*):
-  1. **(model)** `purpose` inconnu (`"orchard"`) → panic.
-  2. `purpose` vide `""` (colonne `NULL` mal lue) → panic.
-  3. Vivrier non fixateur, `demand` vide `""` → panic. **Fails at first**: the
-     `case purpose == PurposeFood:` line catches every demand.
+- [ ] `NetEffect` doc comment: "May panic if" → "It panics if" (the behaviour
+      is guaranteed, as in `regexp.MustCompile`).
+- [ ] Optional: a `TestNetEffectPanics` case for an empty purpose `""` (a
+      `NULL` column read badly). Already covered by the `default`; the case
+      would document it.
 
-  ```go
-  func TestNetEffectPanics(t *testing.T) {
-  	tests := []struct {
-  		name          string
-  		purpose       Purpose
-  		fixesNitrogen bool
-  		demand        Demand
-  	}{
-  		{
-  			name:          "an unknown purpose panics",
-  			purpose:       Purpose("orchard"),
-  			fixesNitrogen: false,
-  			demand:        DemandHeavy,
-  		},
-  	}
-  	for _, tt := range tests {
-  		t.Run(tt.name, func(t *testing.T) {
-  			defer func() {
-  				if r := recover(); r == nil {
-  					t.Errorf("NetEffect(%q, %v, %q) did not panic",
-  						tt.purpose, tt.fixesNitrogen, tt.demand)
-  				}
-  			}()
-  			NetEffect(tt.purpose, tt.fixesNitrogen, tt.demand)
-  		})
-  	}
-  }
-  ```
-
-- [ ] **Green**: write the last food line with explicit values,
-      `demand == DemandModerate || demand == DemandLight`.
-      Check: `go test ./internal/potager/ -run TestNetEffectPanics -v` → **3 PASS**.
-- [ ] Panic message: lower case, with the values through `fmt.Sprintf` and
-      `%q`, e.g. `netEffect: unknown purpose "orchard" or demand ""`.
-- [ ] **Sabotage**: `default` returns `EffectNeutral` instead of panicking →
-      cases 1 and 2 fail with "did not panic". Restore.
-- [ ] The two sabotages planned above for the table (fixing always enriches;
-      moderate treated as heavy).
-- [ ] Commit (`refs #8`, with the `#`).
-
-## Next step: `ExpectedEnd`
+## Current step: `ExpectedEnd`
 
 Order changed on 2026-10-30: `ExpectedEnd` before `Status`, as planned above.
 
@@ -203,7 +159,136 @@ a `bool` such as `fixesNitrogen`.
 ### Steps
 
 - [x] `Date.IsZero()`, test-first: `TestDateIsZero`, 4 cases, in `date_test.go`.
-- [ ] `MaturityFrom` enum (`sowing`, `transplant`), like `Purpose`.
-- [ ] Signature and result shape (computed date, stored date, nothing, and
-      whether to ask for the transplant date).
-- [ ] `TestExpectedEnd`, then the implementation.
+- [x] `MaturityFrom` enum (`sowing`, `transplant`), like `Purpose`, in
+      `expectedend.go`.
+- [x] Signature and result shape, decided below.
+- [x] `Planting` in `planting.go` (own file: a central domain noun, used by
+      `ExpectedEnd`, then `Status`, the store and `web`). Exported fields: the
+      store fills them from another package.
+- [x] `ExpectedEndSource` enum in `expectedend.go`, four values. A `string`
+      like the other enums, although it is never stored: readable test output.
+- [x] `CONTEXT.md`: *Catalogue* and *Expected end* added to the glossary.
+
+**Pick up here (stopped on 2026-10-30, evening).** Uncommitted:
+`planting.go`, `ExpectedEndSource`, `CONTEXT.md`, these notes.
+
+- [ ] **Doc comments**, before the commit:
+  - `ExpectedEndSource`: "tells where the source of expected end date" does
+    not parse. E.g. "ExpectedEndSource tells where the date returned by
+    ExpectedEnd comes from."
+  - `ExpectedEndSourceNeedsTransplant`: a sentence after the name, e.g.
+    "ExpectedEndSourceNeedsTransplant means there is no date and the screen
+    asks for the transplant date (AC 5)." Its name gives the cause, not what
+    the screen must do; without it, `web` could treat it like `None`.
+  - `MaturityFrom`: "the step" → "the date of the planting"; add the
+    no-fallback rule ("a transplant species without a transplant date has no
+    expected end").
+  - Optional, `Planting`: "Maturity days fields" → name them, `MaturityFrom`
+    and `DaysToMaturity`.
+- [ ] Commit (`refs #8`).
+- [ ] **Stub**: `ExpectedEnd(p Planting) (Date, ExpectedEndSource)` returning
+      `Date{}, ExpectedEndSourceNone`, only so the test compiles.
+- [ ] **`TestExpectedEnd`** in `expectedend_test.go`: the model case below,
+      then cases 2 to 10 of the plan.
+      Check: `go test ./internal/potager/ -run TestExpectedEnd -v` → **10
+      cases, 2 PASS** (8 and 10, the only ones expecting "none"). Any other
+      green case does not test what it claims.
+- [ ] Implementation, then the three sabotages listed under the plan.
+- [ ] Decide the open edge case (`sowing` species with only a transplant
+      date), write it in the spec, add the case.
+- [ ] Panics: an unknown `Purpose` or `MaturityFrom`, like `TestNetEffectPanics`.
+- [ ] Then `Status`: it receives the expected end computed here.
+
+Model case:
+
+```go
+func TestExpectedEnd(t *testing.T) {
+	tests := []struct {
+		name       string
+		planting   Planting
+		wantDate   Date
+		wantSource ExpectedEndSource
+	}{
+		{
+			name: "an 80-day tomato transplanted on 10/05/2026 is expected on 29/07/2026 (AC 5)",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromTransplant,
+				TransplantedAt: DateFromInt(2026, time.May, 10),
+				DaysToMaturity: 80,
+			},
+			wantDate:   DateFromInt(2026, time.July, 29),
+			wantSource: ExpectedEndSourceComputed,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotDate, gotSource := ExpectedEnd(tt.planting)
+			if gotDate != tt.wantDate || gotSource != tt.wantSource {
+				t.Errorf("ExpectedEnd(%+v) = (%v, %q), want (%v, %q)",
+					tt.planting, gotDate, gotSource, tt.wantDate, tt.wantSource)
+			}
+		})
+	}
+}
+```
+
+Fields left out of a struct literal take their zero value, i.e. "absent":
+each case lists only what matters to it. `%+v` prints field names and calls
+`Date.String()` on nested dates.
+
+### Decision: signature
+
+`func ExpectedEnd(p Planting) (Date, ExpectedEndSource)`
+
+- **Input: `Planting`**, the domain noun (`CONTEXT.md`). Five fields come from
+  `plantings`, two are catalogue facts borrowed from the species and the
+  variety. In step 1 a planting has one variety, so those two sit flat in the
+  struct; with mixes (step 2) they become a list of components and a `MAX`.
+  A struct rather than seven arguments: three are `Date` and two are `int`, and
+  swapping `SownAt` and `TransplantedAt` would compile silently.
+- **Output: `(Date, ExpectedEndSource)`**: the date (`Date{}` when there is
+  none) and where it comes from. An enum rather than two `bool`s: four values,
+  no impossible combination such as "stored and needs a transplant date".
+
+Names (all confirmed and declared):
+
+| `Planting` field | Column |
+| --- | --- |
+| `Purpose` | `plantings.purpose` |
+| `MaturityFrom` | `species.maturity_from` |
+| `SownAt` | `plantings.sown_at` |
+| `TransplantedAt` | `plantings.transplanted_at` |
+| `ExpectedEndAt` | `plantings.expected_end_at` (entered by hand) |
+| `DaysToMaturity` | `varieties.days_to_maturity` |
+| `MaturityDaysOverride` | `plantings.maturity_days_override` |
+
+| `ExpectedEndSource` | Meaning | Screen |
+| --- | --- | --- |
+| `ExpectedEndSourceComputed` | start + days | « Récolte prévue : 29/07/2026 » |
+| `ExpectedEndSourceStored` | entered by hand | « … (saisie) » |
+| `ExpectedEndSourceNone` | nothing to show | nothing |
+| `ExpectedEndSourceNeedsTransplant` | transplant species, no transplant date | « Indiquez la date de plantation… » |
+
+### `TestExpectedEnd` plan
+
+1. **(model)** AC 5: tomate repiquée le 10/05/2026, 80 jours → 29/07/2026, computed.
+2. AC 5: la même tomate, seulement semée → `Date{}`, needs transplant.
+3. Espèce `sowing` (radis) semée le 01/04/2026, 30 jours → 01/05/2026, computed.
+4. Espèce `transplant` semée **et** repiquée → compte depuis la plantation.
+5. Override: tomate repiquée le 10/05/2026, variété 80, override 90 → 08/08/2026, computed.
+6. Saisie sur une culture vivrière: 01/07/2026 saisie l'emporte sur le 29/07 calculé → stored.
+7. Saisie sans date de plantation (espèce `transplant`, seulement semée) → stored: rule 1 comes first.
+8. AC 6: engrais vert sans saisie → `Date{}`, none.
+9. Engrais vert avec saisie → stored.
+10. Culture vivrière, variété sans durée, pas d'override → `Date{}`, none.
+
+Edge case left open (spec silent): a `sowing` species with only a transplant
+date. Validation lets it through; decide before adding a case, and write the
+answer in the spec.
+
+Sabotages:
+
+- fall back to the sowing date → case 2 fails;
+- ignore the override → case 5 fails;
+- check the stored value after the computation → case 6 fails.
