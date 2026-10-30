@@ -51,3 +51,58 @@ func TestDateFromTime(t *testing.T) {
 		})
 	}
 }
+
+func TestAddDays(t *testing.T) {
+	tests := []struct {
+		name string
+		in   Date
+		days int
+		want Date
+	}{
+		{
+			name: "80-day tomato transplanted on May 10th is ready on July 29th (AC 5)",
+			in:   DateFromInt(2023, time.May, 10),
+			days: 80,
+			want: DateFromInt(2023, time.July, 29),
+		},
+		{
+			name: "add 0 day.",
+			in:   DateFromInt(2023, time.May, 10),
+			days: 0,
+			want: DateFromInt(2023, time.May, 10),
+		},
+		{
+			name: "day addition changes year.",
+			in:   DateFromInt(2023, time.December, 31),
+			days: 1,
+			want: DateFromInt(2024, time.January, 1),
+		},
+		{
+			name: "leap year",
+			in:   DateFromInt(2028, time.February, 28),
+			days: 1,
+			want: DateFromInt(2028, time.February, 29),
+		},
+		{
+			name: "non-leap year",
+			in:   DateFromInt(2028, time.February, 29),
+			days: 1,
+			want: DateFromInt(2028, time.March, 1),
+		},
+		{
+			name: "substract day",
+			in:   DateFromInt(2025, time.May, 10),
+			days: -21,
+			want: DateFromInt(2025, time.April, 19),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.in.addDays(tt.days)
+			if got != tt.want {
+				t.Errorf("AddDays(%v, %d) = %v, want %v", tt.in, tt.days, got, tt.want)
+			}
+		})
+	}
+}

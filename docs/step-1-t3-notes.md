@@ -30,11 +30,8 @@ owner writes the remaining cases, then the implementation.
 
 ## Still open in `internal/potager/date.go`
 
-- [ ] **`LoadLocation` on every call** in `DateFromTime`: load the zone **once**
-      into a package-level variable (`init()`, or `var paris = mustLoad(...)` in
-      the spirit of `template.Must` / `regexp.MustCompile`). A missing tzdata then
-      fails at start-up rather than on the first request. Case 5 of the test
-      below needs this variable.
+- [x] Zone loaded once into the package variable `locParis` (`init()`).
+- [x] `TestDateFromTime`: 5 cases, both sabotages done (`.In` removed, `.UTC()`).
 - [ ] **`compare` checks equality**, but `Status` needs the *order*. Replace it
       with `Before(other Date) bool` or `Compare(other Date) int` (-1/0/+1, as
       in `cmp.Compare` and `time.Time.Compare`). `==` is enough for equality.
@@ -45,63 +42,60 @@ owner writes the remaining cases, then the implementation.
 - [ ] Before deploying (T11): `import _ "time/tzdata"`, because a minimal Docker
       image has no tzdata.
 
-## Current step: `TestDateFromTime`
+## Current step: `TestAddDays`
 
-File: `internal/potager/date_test.go`.
+File: `internal/potager/date_test.go`. `addDays` is how `ExpectedEnd` counts
+maturity from a start date (`docs/design.md`), and how a termination date is
+counted back from the next planting (negative days).
 
-Cases (rule: *« `Date` is a calendar date without time or zone »* + ADR 0003):
+Cases:
 
-1. **(model)** 22h30 UTC le 28/03/2026 = 23h30 à Paris (heure d'hiver) → **28/03**.
-2. 23h30 UTC le 28/03/2026 = 00h30 à Paris → **29/03** (le jour bascule).
-3. 22h30 UTC le 15/07/2026 = 00h30 à Paris (heure d'été, +2) → **16/07**.
-4. Jour du changement d'heure, 29/03/2026 : 01h30 UTC = 03h30 à Paris → **29/03**.
-5. Entrée déjà à l'heure de Paris : 9h00 le 12/10/2025 (le semis d'ail de la spec) → **12/10/2025**.
+1. **(model)** AC 5 : tomate repiquée le 10/05/2026, variété à 80 jours → **29/07/2026**.
+2. + 0 jour → **même date**.
+3. Changement d'année : 15/12/2025 + 20 → **04/01/2026**.
+4. Année bissextile : 28/02/2028 + 1 → **29/02/2028**.
+5. Année non bissextile : 28/02/2026 + 1 → **01/03/2026**.
+6. Jours négatifs (date de destruction comptée à rebours) : 10/05/2026 − 21 → **19/04/2026**.
 
 Model case:
 
 ```go
-package potager
-
-import (
-	"testing"
-	"time"
-)
-
-func TestDateFromTime(t *testing.T) {
+func TestAddDays(t *testing.T) {
 	tests := []struct {
 		name string
-		in   time.Time
+		in   Date
+		days int
 		want Date
 	}{
 		{
-			name: "late evening in winter stays on the same day in Paris",
-			in:   time.Date(2026, time.March, 28, 22, 30, 0, 0, time.UTC), // 23:30 CET
-			want: DateFromInt(2026, time.March, 28),
+			name: "80-day tomato transplanted on 10 May is ready on 29 July (AC 5)",
+			in:   DateFromInt(2026, time.May, 10),
+			days: 80,
+			want: DateFromInt(2026, time.July, 29),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := DateFromTime(tt.in)
+			got := tt.in.addDays(tt.days)
 			if got != tt.want {
-				t.Errorf("DateFromTime(%v) = %v, want %v", tt.in, got, tt.want)
+				t.Errorf("%v.addDays(%d) = %v, want %v", tt.in, tt.days, got, tt.want)
 			}
 		})
 	}
 }
 ```
 
-The comparison uses `!=`, not `Equal`, on purpose: it also checks that the
-constructors produce comparable `Date` values.
+Red first: uncomment the `addDays` stub (`panic("todo")`) so the test compiles
+and fails, then write the one-line body.
 
 **Done when:**
 
-- `go test ./internal/potager/ -run TestDateFromTime -v`: **5 cases, all PASS**.
-- **Sabotage:** remove `.In(loc)` from `DateFromTime`. Cases 2 and 3 must fail,
-  cases 1 and 4 still pass. Explain why, then restore.
-
-Then send Claude the test file and the explanation of the sabotage.
+- `go test ./internal/potager/ -run TestAddDays -v`: **6 cases, all PASS**.
+- **Sabotage 1:** `AddDate(0, days, 0)` (months instead of days). Every case but
+  case 2 fails. Explain why case 2 survives.
+- **Sabotage 2:** `d.t.Add(time.Duration(days) * 24 * time.Hour)`. Nothing
+  fails. Explain why, and what would break if `t` were midnight in Paris.
 
 ## Next step
 
-Test `addDays` and the comparison (`Before` or `Compare`), then move on to
-`Season`.
+Test the comparison (`Before` or `Compare`), then move on to `Season`.
