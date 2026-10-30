@@ -32,70 +32,66 @@ owner writes the remaining cases, then the implementation.
 
 - [x] Zone loaded once into the package variable `locParis` (`init()`).
 - [x] `TestDateFromTime`: 5 cases, both sabotages done (`.In` removed, `.UTC()`).
-- [ ] **`compare` checks equality**, but `Status` needs the *order*. Replace it
-      with `Before(other Date) bool` or `Compare(other Date) int` (-1/0/+1, as
-      in `cmp.Compare` and `time.Time.Compare`). `==` is enough for equality.
-- [ ] `addDays`: a single line, `d.t.AddDate(0, 0, days)` wrapped in a `Date`.
-      Write it **after** its test.
+- [x] `addDays`: `TestAddDays`, 6 cases. Negative days kept (backward
+      termination in `design.md`); positive maturity is checked at input.
+- [ ] **`compare` checks equality**, but `Status` needs the *order*. Decision:
+      `before(other Date) bool`, strict, lower case like `addDays`. `==` is
+      enough for equality.
 - [ ] Optional: rename `DateFromInt` to `NewDate` or `DateOf` (the name used by
       `civil`).
 - [ ] Before deploying (T11): `import _ "time/tzdata"`, because a minimal Docker
       image has no tzdata.
 
-## Current step: `TestAddDays`
+## Current step: `TestBefore`
 
-File: `internal/potager/date_test.go`. `addDays` is how `ExpectedEnd` counts
-maturity from a start date (`docs/design.md`), and how a termination date is
-counted back from the next planting (negative days).
+File: `internal/potager/date_test.go`. `Status` uses it twice: *start date in
+the future* is `today.before(start)`, *expected end passed* is
+`end.before(today)`. It is **strict**: on the expected end day itself the
+planting is still « En cours ».
 
 Cases:
 
-1. **(model)** AC 5 : tomate repiquée le 10/05/2026, variété à 80 jours → **29/07/2026**.
-2. + 0 jour → **même date**.
-3. Changement d'année : 15/12/2025 + 20 → **04/01/2026**.
-4. Année bissextile : 28/02/2028 + 1 → **29/02/2028**.
-5. Année non bissextile : 28/02/2026 + 1 → **01/03/2026**.
-6. Jours négatifs (date de destruction comptée à rebours) : 10/05/2026 − 21 → **19/04/2026**.
+1. **(model)** La veille est avant : 28/07/2026 avant 29/07/2026 → **true**.
+2. Le lendemain n'est pas avant : 30/07/2026 avant 29/07/2026 → **false**.
+3. Même jour → **false** (le jour de la récolte prévue, la plantation est encore « En cours »).
+4. Changement d'année : 31/12/2025 avant 01/01/2026 → **true**.
 
 Model case:
 
 ```go
-func TestAddDays(t *testing.T) {
+func TestBefore(t *testing.T) {
 	tests := []struct {
-		name string
-		in   Date
-		days int
-		want Date
+		name  string
+		d     Date
+		other Date
+		want  bool
 	}{
 		{
-			name: "80-day tomato transplanted on 10 May is ready on 29 July (AC 5)",
-			in:   DateFromInt(2026, time.May, 10),
-			days: 80,
-			want: DateFromInt(2026, time.July, 29),
+			name:  "the day before is before",
+			d:     DateFromInt(2026, time.July, 28),
+			other: DateFromInt(2026, time.July, 29),
+			want:  true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.in.addDays(tt.days)
+			got := tt.d.before(tt.other)
 			if got != tt.want {
-				t.Errorf("%v.addDays(%d) = %v, want %v", tt.in, tt.days, got, tt.want)
+				t.Errorf("%v.before(%v) = %v, want %v", tt.d, tt.other, got, tt.want)
 			}
 		})
 	}
 }
 ```
 
-Red first: uncomment the `addDays` stub (`panic("todo")`) so the test compiles
-and fails, then write the one-line body.
+Red first: replace the commented `compare` with a `before` stub that panics.
 
 **Done when:**
 
-- `go test ./internal/potager/ -run TestAddDays -v`: **6 cases, all PASS**.
-- **Sabotage 1:** `AddDate(0, days, 0)` (months instead of days). Every case but
-  case 2 fails. Explain why case 2 survives.
-- **Sabotage 2:** `d.t.Add(time.Duration(days) * 24 * time.Hour)`. Nothing
-  fails. Explain why, and what would break if `t` were midnight in Paris.
+- `go test ./internal/potager/ -run TestBefore -v`: **4 cases, all PASS**.
+- **Sabotage 1:** `!d.t.After(other.t)` (≤ instead of <). Only case 3 fails.
+- **Sabotage 2:** `d.t.Day() < other.t.Day()`. Only case 4 fails. Explain why.
 
 ## Next step
 
-Test the comparison (`Before` or `Compare`), then move on to `Season`.
+`Season`, the year of `ended_at`.

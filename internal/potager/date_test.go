@@ -106,3 +106,46 @@ func TestAddDays(t *testing.T) {
 		})
 	}
 }
+
+func TestBefore(t *testing.T) {
+	tests := []struct {
+		name  string
+		d     Date
+		other Date
+		want  bool
+	}{
+		{
+			name:  "the day before is before",
+			d:     DateFromInt(2026, time.July, 28),
+			other: DateFromInt(2026, time.July, 29),
+			want:  true,
+		},
+		{
+			name:  "the day after is not before",
+			d:     DateFromInt(2026, time.July, 30),
+			other: DateFromInt(2026, time.July, 29),
+			want:  false,
+		},
+		{
+			name:  "the same day is not before",
+			d:     DateFromInt(2026, time.July, 29),
+			other: DateFromInt(2026, time.July, 29),
+			want:  false,
+		},
+		{
+			name:  "the last of the year is before the first day of the year",
+			d:     DateFromInt(2025, time.December, 31),
+			other: DateFromInt(2026, time.January, 1),
+			want:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.d.before(tt.other)
+			if got != tt.want {
+				t.Errorf("%v.Before(%v) = %v, want %v", tt.d, tt.other, got, tt.want)
+			}
+		})
+	}
+}

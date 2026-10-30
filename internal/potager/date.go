@@ -40,6 +40,6 @@ func (d Date) addDays(days int) Date {
 	return Date{d.t.AddDate(0, 0, days)}
 }
 
-//func (d Date) compare(date Date) bool {
-//	return d.t.Equal(date.t)
-//}
+func (d Date) before(date Date) bool {
+	return d.t.Before(date.t)
+}
