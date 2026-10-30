@@ -34,64 +34,59 @@ owner writes the remaining cases, then the implementation.
 - [x] `TestDateFromTime`: 5 cases, both sabotages done (`.In` removed, `.UTC()`).
 - [x] `addDays`: `TestAddDays`, 6 cases. Negative days kept (backward
       termination in `design.md`); positive maturity is checked at input.
-- [ ] **`compare` checks equality**, but `Status` needs the *order*. Decision:
-      `before(other Date) bool`, strict, lower case like `addDays`. `==` is
-      enough for equality.
+- [x] `before(other Date) bool`, strict, lower case like `addDays`: `TestBefore`,
+      4 cases. No `after`: `b.before(a)` says it.
 - [ ] Optional: rename `DateFromInt` to `NewDate` or `DateOf` (the name used by
       `civil`).
 - [ ] Before deploying (T11): `import _ "time/tzdata"`, because a minimal Docker
       image has no tzdata.
 
-## Current step: `TestBefore`
+## Current step: `TestSeason`
 
-File: `internal/potager/date_test.go`. `Status` uses it twice: *start date in
-the future* is `today.before(start)`, *expected end passed* is
-`end.before(today)`. It is **strict**: on the expected end day itself the
-planting is still « En cours ».
+File: `internal/potager/season_test.go` (or `date_test.go`). Rule: *« Season is
+the year of `ended_at` »*, used only for closed plantings (history section).
+
+Signature: `func Season(endedAt Date) int`. No `Planting` type yet; the caller
+only asks for the season of a closed planting, so there is no optional value to
+handle here. The optional `ended_at` comes with `Status`.
 
 Cases:
 
-1. **(model)** La veille est avant : 28/07/2026 avant 29/07/2026 → **true**.
-2. Le lendemain n'est pas avant : 30/07/2026 avant 29/07/2026 → **false**.
-3. Même jour → **false** (le jour de la récolte prévue, la plantation est encore « En cours »).
-4. Changement d'année : 31/12/2025 avant 01/01/2026 → **true**.
+1. **(model)** AC 8 : ail semé le 12/10/2025, récolté le 04/07/2026 → **2026** (seule la fin compte).
+2. Fin le 01/01/2026 → **2026**.
+3. Fin le 31/12/2025 → **2025**.
 
 Model case:
 
 ```go
-func TestBefore(t *testing.T) {
+func TestSeason(t *testing.T) {
 	tests := []struct {
-		name  string
-		d     Date
-		other Date
-		want  bool
+		name    string
+		endedAt Date
+		want    int
 	}{
 		{
-			name:  "the day before is before",
-			d:     DateFromInt(2026, time.July, 28),
-			other: DateFromInt(2026, time.July, 29),
-			want:  true,
+			name:    "garlic sown in October 2025 and lifted in July 2026 is season 2026 (AC 8)",
+			endedAt: DateFromInt(2026, time.July, 4),
+			want:    2026,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.d.before(tt.other)
+			got := Season(tt.endedAt)
 			if got != tt.want {
-				t.Errorf("%v.before(%v) = %v, want %v", tt.d, tt.other, got, tt.want)
+				t.Errorf("Season(%v) = %d, want %d", tt.endedAt, got, tt.want)
 			}
 		})
 	}
 }
 ```
 
-Red first: replace the commented `compare` with a `before` stub that panics.
-
 **Done when:**
 
-- `go test ./internal/potager/ -run TestBefore -v`: **4 cases, all PASS**.
-- **Sabotage 1:** `!d.t.After(other.t)` (≤ instead of <). Only case 3 fails.
-- **Sabotage 2:** `d.t.Day() < other.t.Day()`. Only case 4 fails. Explain why.
+- `go test ./internal/potager/ -run TestSeason -v`: **3 cases, all PASS**.
+- **Sabotage:** `endedAt.addDays(-1).t.Year()`. Only case 2 fails. Explain why.
 
 ## Next step
 
-`Season`, the year of `ended_at`.
+`NetEffect`, the table in `docs/design.md`.
