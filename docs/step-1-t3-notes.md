@@ -172,6 +172,38 @@ To do, in order:
       moderate treated as heavy).
 - [ ] Commit (`refs #8`, with the `#`).
 
-## Next step
+## Next step: `ExpectedEnd`
 
-`ExpectedEnd`: stored value, `maturity_from`, cover crop. First optional value.
+Order changed on 2026-10-30: `ExpectedEnd` before `Status`, as planned above.
+
+Rule (`step-1-spec.md`, *Expected end*; `design.md`; AC 5 and 6):
+
+1. A stored `expected_end_at` always wins, food or cover. Shown "(saisie)".
+2. Cover crop without a stored value: no expected end.
+3. Food crop: start + maturity days, the start being the date `maturity_from`
+   names (`sowing` or `transplant`).
+4. No fallback: a `transplant` species without a transplant date has no
+   expected end, and the screen asks for that date.
+5. Days: `maturity_days_override` if set, else `varieties.days_to_maturity`
+   (nullable). No `MAX` in step 1: one variety.
+
+### Decision: optional values use the zero value
+
+| Value | Absent = | Why |
+| --- | --- | --- |
+| `Date` | `Date{}`, checked with `IsZero()` | `Date` is comparable, no `nil` to dereference, same idiom as `time.Time.IsZero`. 1 January of year 1 is the sentinel; no garden reaches it. |
+| maturity days (`int`) | `0` | A zero-day maturity is meaningless, so `0` cannot be real data. |
+
+Checked: `DateFromTime(time.Time{}) == Date{}` (Paris in year 1 is +00:09:21,
+same day), and `DateFromInt(1, time.January, 1) == Date{}`.
+
+The zero value only works where zero cannot be real data: it would not work for
+a `bool` such as `fixesNitrogen`.
+
+### Steps
+
+- [x] `Date.IsZero()`, test-first: `TestDateIsZero`, 4 cases, in `date_test.go`.
+- [ ] `MaturityFrom` enum (`sowing`, `transplant`), like `Purpose`.
+- [ ] Signature and result shape (computed date, stored date, nothing, and
+      whether to ask for the transplant date).
+- [ ] `TestExpectedEnd`, then the implementation.

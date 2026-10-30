@@ -149,3 +149,40 @@ func TestBefore(t *testing.T) {
 		})
 	}
 }
+
+func TestDateIsZero(t *testing.T) {
+	tests := []struct {
+		name string
+		date Date
+		want bool
+	}{
+		{
+			name: "the zero Date is an absent date",
+			date: Date{},
+			want: true,
+		},
+		{
+			name: "the date is real and non-zero",
+			date: DateFromInt(2026, time.May, 10),
+			want: false,
+		},
+		{
+			name: "empty time.Time is an absent date",
+			date: DateFromTime(time.Time{}),
+			want: true,
+		},
+		{
+			name: "january 1st, 0001 is the zero Date",
+			date: DateFromInt(1, time.January, 1),
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.date.IsZero()
+			if got != tt.want {
+				t.Errorf("%v.IsZero() = %v, want %v", tt.date, got, tt.want)
+			}
+		})
+	}
+}
