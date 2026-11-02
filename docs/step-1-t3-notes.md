@@ -169,10 +169,11 @@ a `bool` such as `fixesNitrogen`.
       like the other enums, although it is never stored: readable test output.
 - [x] `CONTEXT.md`: *Catalogue* and *Expected end* added to the glossary.
 
-**Pick up here (stopped on 2026-10-30, evening).** Uncommitted:
-`planting.go`, `ExpectedEndSource`, `CONTEXT.md`, these notes.
+**Pick up here (resumed on 2026-11-02).** `planting.go`, `ExpectedEndSource`,
+`CONTEXT.md` and these notes were committed in `708b3b5`, without the doc
+comment fixes below.
 
-- [ ] **Doc comments**, before the commit:
+- [ ] **Doc comments**, in their own commit:
   - `ExpectedEndSource`: "tells where the source of expected end date" does
     not parse. E.g. "ExpectedEndSource tells where the date returned by
     ExpectedEnd comes from."
@@ -185,7 +186,7 @@ a `bool` such as `fixesNitrogen`.
     expected end").
   - Optional, `Planting`: "Maturity days fields" → name them, `MaturityFrom`
     and `DaysToMaturity`.
-- [ ] Commit (`refs #8`).
+- [x] Commit (`refs #8`): `708b3b5`.
 - [ ] **Stub**: `ExpectedEnd(p Planting) (Date, ExpectedEndSource)` returning
       `Date{}, ExpectedEndSourceNone`, only so the test compiles.
 - [ ] **`TestExpectedEnd`** in `expectedend_test.go`: the model case below,

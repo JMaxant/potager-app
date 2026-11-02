@@ -286,7 +286,7 @@ fragment is reachable only through HTMX.
 9. The plot list issues a constant number of queries regardless of how many plots
    exist.
 10. Every screen is usable at 375 px wide.
-11. `task check` passes: vet, staticcheck, tests, `sqlc diff`, `templ generate --check`.
+11. `task check` passes: gofmt, vet, staticcheck, tests, `sqlc diff`, `templ generate --check`.
     CI runs these as quality gates on `main`; it does not deploy.
 12. A planting whose expected end has passed shows *À récolter* (or *À terminer*)
     and stays under *Cultures en cours* until closed.

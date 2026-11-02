@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkouts project.
+      - name: Checks out project.
         uses: actions/checkout@v7
       - name: Installs go.
         uses: actions/setup-go@v7
@@ -29,6 +29,8 @@ jobs:
         uses: go-task/setup-task@v2
         with:
           version: 3.x
+      - name: Checks formatting.
+        run: task check:fmt
       - name: Runs linter.
         run: task lint
       - name: Launches Postgres.

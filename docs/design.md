@@ -25,7 +25,7 @@ in, when they come out, and whether the succession makes agronomic sense.
 | Data | Postgres 18, `sqlc` over hand-written SQL, `goose` migrations. No ORM. |
 | Operations | `log/slog`, `context` throughout, graceful shutdown, env config, wrapped errors, `/health` |
 | Deploy | Docker Compose + Caddy (HTTPS, basic auth until step 3) on a small VPS. A `migrate` service applies migrations before the app starts. By hand until it is boring |
-| CI | GitHub Actions on `main`, quality gates only (no deploy): vet, staticcheck, tests against a real Postgres, `sqlc diff`, `templ generate --check` |
+| CI | GitHub Actions on `main`, quality gates only (no deploy): gofmt, vet, staticcheck, tests against a real Postgres, `sqlc diff`, `templ generate --check` |
 
 `sqlc diff` and `templ generate --check` are in CI on purpose: generated code that
 has drifted from its source fails the build instead of rotting quietly.
