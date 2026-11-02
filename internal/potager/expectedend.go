@@ -20,3 +20,14 @@ const (
 	// ExpectedEndSourceNeedsTransplant means there is no date because the transplant date is missing; unlike None, the user can supply it.
 	ExpectedEndSourceNeedsTransplant ExpectedEndSource = "needs transplant"
 )
+
+// ExpectedEnd returns the expected end date of a planting, and the source of that date.
+func ExpectedEnd(p Planting) (Date, ExpectedEndSource) {
+	var endDate Date
+	var source ExpectedEndSource
+	if p.DaysToMaturity != 0 {
+		endDate = p.TransplantedAt.addDays(p.DaysToMaturity)
+		source = ExpectedEndSourceComputed
+	}
+	return endDate, source
+}

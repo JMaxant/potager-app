@@ -173,7 +173,7 @@ a `bool` such as `fixesNitrogen`.
 `CONTEXT.md` and these notes were committed in `708b3b5`, without the doc
 comment fixes below.
 
-- [ ] **Doc comments**, in their own commit:
+- [x] **Doc comments**, committed in `64e6bcc`:
   - `ExpectedEndSource`: "tells where the source of expected end date" does
     not parse. E.g. "ExpectedEndSource tells where the date returned by
     ExpectedEnd comes from."
