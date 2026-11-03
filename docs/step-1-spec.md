@@ -312,7 +312,8 @@ fragment is reachable only through HTMX.
 
 ## Tests
 
-- **Domain** — done: `ExpectedEnd`, `StartDate`, `Season`, `NetEffect`.
+- **Domain** — table-driven tests for `Date`, `ExpectedEnd`, `Season`,
+  `NetEffect` (done); `StartDate` and `Status` (to do).
 - **Store** — one integration test per query against a real Postgres, including
   the transactional write of a planting plus its variety row, and the
   archived-plot filter.
