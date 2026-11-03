@@ -15,7 +15,7 @@ type ExpectedEndSource string
 const (
 	ExpectedEndSourceComputed ExpectedEndSource = "computed"
 	ExpectedEndSourceStored   ExpectedEndSource = "stored"
-	// ExpectedEndSourceNone means there is no date such as a cover crop with no date entered, or a food crop with no days to maturity.
+	// ExpectedEndSourceNone means there is no date such as a cover crop with no date entered, a food crop with no days to maturity or a store-bought MaturityFromSowing crop.
 	ExpectedEndSourceNone ExpectedEndSource = "none"
 	// ExpectedEndSourceNeedsTransplant means there is no date because the transplant date is missing; unlike None, the user can supply it.
 	ExpectedEndSourceNeedsTransplant ExpectedEndSource = "needs transplant"
@@ -23,19 +23,35 @@ const (
 
 // ExpectedEnd returns the expected end date of a planting, and the source of that date.
 func ExpectedEnd(p Planting) (Date, ExpectedEndSource) {
-	var endDate Date
-	var source ExpectedEndSource
-	switch {
-	case p.Purpose == PurposeCover:
+	// If a Planting provides an ExpectedEndAt, ExpectedEndAt wins.
+	if !p.ExpectedEndAt.IsZero() {
+		return p.ExpectedEndAt, ExpectedEndSourceStored
+	}
+
+	if p.Purpose == PurposeCover {
 		return Date{}, ExpectedEndSourceNone
-	case p.Purpose == PurposeFood && p.DaysToMaturity != 0:
+	}
+
+	switch {
+	case p.MaturityFrom == MaturityFromTransplant && p.TransplantedAt.IsZero():
+		return Date{}, ExpectedEndSourceNeedsTransplant
+
+	case p.MaturityFrom == MaturityFromTransplant && p.MaturityDaysOverride != 0:
+		return p.TransplantedAt.addDays(p.MaturityDaysOverride), ExpectedEndSourceComputed
+
+	case p.MaturityFrom == MaturityFromTransplant && p.DaysToMaturity != 0:
 		return p.TransplantedAt.addDays(p.DaysToMaturity), ExpectedEndSourceComputed
 
-	case p.Purpose == PurposeFood && p.DaysToMaturity == 0:
+	case p.MaturityFrom == MaturityFromSowing && p.SownAt.IsZero():
+		return Date{}, ExpectedEndSourceNone
+
+	case p.MaturityFrom == MaturityFromSowing && p.MaturityDaysOverride != 0:
+		return p.SownAt.addDays(p.MaturityDaysOverride), ExpectedEndSourceComputed
+
+	case p.MaturityFrom == MaturityFromSowing && p.DaysToMaturity != 0:
+		return p.SownAt.addDays(p.DaysToMaturity), ExpectedEndSourceComputed
+
+	default:
+		return Date{}, ExpectedEndSourceNone
 	}
-	if p.DaysToMaturity != 0 {
-		endDate = p.TransplantedAt.addDays(p.DaysToMaturity)
-		source = ExpectedEndSourceComputed
-	}
-	return endDate, source
 }

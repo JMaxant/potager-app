@@ -35,7 +35,7 @@ _Avoid_: incorporation, burying (*enfouissement*), destruction
 The end of a food crop.
 
 **Expected end** (*fin prévue*; *récolte prévue* or *terminaison prévue* in the interface):
-When a planting should leave the ground. Either entered by hand, which always wins, or derived for a food crop: the date the species counts maturity from (sowing or transplant), plus the variety's days to maturity. Never derived from the other date when that one is missing, and never derived for a cover crop.
+When a planting should leave the ground. Either entered by hand, which always wins, or derived for a food crop: the date the species counts maturity from (sowing or transplant), plus the variety's days to maturity. Never derived from the other date when that one is missing, and never derived for a cover crop. The species' maturity reference (`maturity_from`) states what the catalogue figure is counted from, not how the gardener grew this planting.
 _Avoid_: due date, harvest date (that is when it actually ended)
 
 **Soil effect** (*effet sur le sol*):

@@ -200,8 +200,15 @@ appears.
 **Expected end** — `ExpectedEnd`. A food planting with a maturity figure shows
 *« Récolte prévue : 29/07/2026 »*. Maturity is counted from the date the species
 names, with no fallback: a transplanted species with no transplant date shows
-*« Indiquez la date de plantation pour obtenir une récolte prévue »*, because
-counting seed-packet days from the sowing would show a harvest weeks too early. A cover crop shows nothing unless
+*« Indiquez la date de plantation ou saisissez une fin prévue »*, because
+counting seed-packet days from the sowing would show a harvest weeks too early.
+The message offers the manual entry because the same screen serves a seedling
+not yet planted out and a crop sown in place that never will be.
+A sown species with no sowing date (a plant bought at the market) shows no
+expected end and no message: the gardener cannot supply that date, and counting
+from the transplant would land weeks late. When both dates are set, a sown
+species still counts from the sowing, since the seed-packet figure already
+includes the time spent in the tray. A cover crop shows nothing unless
 `expected_end_at` was set by hand. A stored value always wins and is marked as
 such: *« Récolte prévue : 01/07/2026 (saisie) »*.
 
@@ -277,7 +284,11 @@ fragment is reachable only through HTMX.
    reveals the seed-rate field.
 5. A tomato transplanted on 10/05/2026 with an 80-day variety shows *« Récolte
    prévue : 29/07/2026 »*; the same variety dated only by its sowing shows no
-   expected end and asks for the transplant date.
+   expected end and asks for the transplant date or a manual expected end. A
+   30-day lettuce bought as a plant and planted out on 01/05/2026, with no
+   sowing date, shows no expected end and no message; sown in a tray on
+   01/04/2026 and planted out on 20/04/2026, it shows *« Récolte prévue :
+   01/05/2026 »*.
 6. A cover crop shows no expected end unless one was entered by hand.
 7. A planting with neither sowing nor planting date is refused with the message
    above, and the entered values survive the refusal.

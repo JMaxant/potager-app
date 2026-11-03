@@ -100,7 +100,43 @@ func TestExpectedEnd(t *testing.T) {
 			wantDate:   Date{},
 			wantSource: ExpectedEndSourceNone,
 		},
+		{
+			name: "a sown species with no sowing date (bought) shows no expected date",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromSowing,
+				DaysToMaturity: 30,
+				TransplantedAt: DateFromInt(2026, time.May, 1),
+			},
+			wantDate:   Date{},
+			wantSource: ExpectedEndSourceNone,
+		},
+		{
+			name: "a sown species with a transplant date (started in a pot) still counts from the sowing",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromSowing,
+				SownAt:         DateFromInt(2026, time.April, 1),
+				TransplantedAt: DateFromInt(2026, time.April, 20),
+				DaysToMaturity: 30,
+			},
+			wantDate:   DateFromInt(2026, time.May, 1),
+			wantSource: ExpectedEndSourceComputed,
+		},
+		{
+			name: "a sown species with an override days to maturity uses it",
+			planting: Planting{
+				Purpose:              PurposeFood,
+				MaturityFrom:         MaturityFromSowing,
+				SownAt:               DateFromInt(2026, time.April, 1),
+				DaysToMaturity:       30,
+				MaturityDaysOverride: 40,
+			},
+			wantDate:   DateFromInt(2026, time.May, 11),
+			wantSource: ExpectedEndSourceComputed,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gotDate, gotSource := ExpectedEnd(tt.planting)
