@@ -25,6 +25,14 @@ const (
 func ExpectedEnd(p Planting) (Date, ExpectedEndSource) {
 	var endDate Date
 	var source ExpectedEndSource
+	switch {
+	case p.Purpose == PurposeCover:
+		return Date{}, ExpectedEndSourceNone
+	case p.Purpose == PurposeFood && p.DaysToMaturity != 0:
+		return p.TransplantedAt.addDays(p.DaysToMaturity), ExpectedEndSourceComputed
+
+	case p.Purpose == PurposeFood && p.DaysToMaturity == 0:
+	}
 	if p.DaysToMaturity != 0 {
 		endDate = p.TransplantedAt.addDays(p.DaysToMaturity)
 		source = ExpectedEndSourceComputed
