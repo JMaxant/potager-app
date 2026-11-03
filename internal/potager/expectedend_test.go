@@ -23,6 +23,29 @@ func TestExpectedEnd(t *testing.T) {
 			wantDate:   DateFromInt(2026, time.July, 29),
 			wantSource: ExpectedEndSourceComputed,
 		},
+		{
+			name: "an 80-day tomato on 10/05/2026 not transplanted expects ExpectedEndSourceNeedsTransplant",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromTransplant,
+				TransplantedAt: Date{},
+				DaysToMaturity: 80,
+			},
+			wantDate:   Date{},
+			wantSource: ExpectedEndSourceNeedsTransplant,
+		},
+		{
+			name: "a 30-day radish sown on 01/04/2026 is expected on 01/05/2026",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromSowing,
+				TransplantedAt: DateFromInt(2026, time.April, 01),
+				DaysToMaturity: 30,
+			},
+			wantDate:   DateFromInt(2026, time.May, 01),
+			wantSource: ExpectedEndSourceComputed,
+		},
+		{},
 		// TODO(user): cases 2 to 10 of the plan in docs/step-1-t3-notes.md
 		// (section "TestExpectedEnd plan"). One case per sentence of the rule;
 		// list only the fields that matter, the others stay zero, i.e. absent.
