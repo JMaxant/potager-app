@@ -91,8 +91,10 @@ families ──< species ──< varieties ──< planting_varieties >── pl
   manure.
 - **`plots`** — name, type, dimensions, position, `archived_at`. No coordinates:
   a map can be derived from dimensions and ordering if one is ever built.
-- **`plantings`** — one plot, one `purpose`, one set of dates. Occupancy is a
-  generated `daterange`.
+- **`plantings`** — one plot, one `purpose`, one set of dates, and
+  `sown_in_place`. Occupancy is a generated `daterange` starting at `sown_at`
+  when `sown_in_place`, at `transplanted_at` otherwise, and null while a
+  seedling waits in its tray (ADR 0008).
 - **`planting_varieties`** — components of a planting, with `quantity` and
   `seed_rate_g_m2`.
 

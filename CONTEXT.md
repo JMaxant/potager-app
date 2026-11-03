@@ -44,5 +44,13 @@ What a planting leaves for whatever follows it: enriching, neutral, slightly dep
 **Season** (*saison*):
 The year a planting leaves the ground, not the year it went in.
 
+**Start date** (*début de culture*):
+When a planting's life begins: the sowing when it was sown by the gardener (in place or in a tray), the transplant when it was bought as a plant. It is the earlier of the two dates, and dates the planting itself, not its place in the plot.
+_Avoid_: planting date (that is the transplant)
+
+**Sown in place** (*semé en place*):
+Whether the seed went straight into the plot. Recorded by the gardener, never guessed from the species: the catalogue only gives the usual practice, used as the form's default. A planting sown in place is never transplanted.
+_Avoid_: direct sowing in code (`sown_in_place`)
+
 **Occupancy**:
-The span of dates during which a planting holds its plot.
+The span of dates during which a planting holds its plot. It starts at the sowing for a planting sown in place, at the transplant otherwise; a seedling still in its tray does not occupy the plot yet. It ends when the planting leaves the ground.
