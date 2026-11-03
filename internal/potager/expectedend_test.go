@@ -28,7 +28,7 @@ func TestExpectedEnd(t *testing.T) {
 			planting: Planting{
 				Purpose:        PurposeFood,
 				MaturityFrom:   MaturityFromTransplant,
-				TransplantedAt: Date{},
+				SownAt:         DateFromInt(2026, time.May, 10),
 				DaysToMaturity: 80,
 			},
 			wantDate:   Date{},
@@ -39,16 +39,67 @@ func TestExpectedEnd(t *testing.T) {
 			planting: Planting{
 				Purpose:        PurposeFood,
 				MaturityFrom:   MaturityFromSowing,
-				TransplantedAt: DateFromInt(2026, time.April, 01),
+				SownAt:         DateFromInt(2026, time.April, 1),
 				DaysToMaturity: 30,
 			},
-			wantDate:   DateFromInt(2026, time.May, 01),
+			wantDate:   DateFromInt(2026, time.May, 1),
 			wantSource: ExpectedEndSourceComputed,
 		},
-		{},
-		// TODO(user): cases 2 to 10 of the plan in docs/step-1-t3-notes.md
-		// (section "TestExpectedEnd plan"). One case per sentence of the rule;
-		// list only the fields that matter, the others stay zero, i.e. absent.
+		{
+			name: "an 80-day tomato transplanted on 10/05/2026 with a 90 days override is expected on 08/08/2026",
+			planting: Planting{
+				Purpose:              PurposeFood,
+				MaturityFrom:         MaturityFromTransplant,
+				TransplantedAt:       DateFromInt(2026, time.May, 10),
+				DaysToMaturity:       80,
+				MaturityDaysOverride: 90,
+			},
+			wantDate:   DateFromInt(2026, time.August, 8),
+			wantSource: ExpectedEndSourceComputed,
+		},
+		{
+			name: "a food crop with a stored ExpectedEndAt is expected as ExpectedEndSourceStored rather than ExpectedEndSourceComputed",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromSowing,
+				SownAt:         DateFromInt(2026, time.April, 1),
+				DaysToMaturity: 80,
+				ExpectedEndAt:  DateFromInt(2026, time.August, 8),
+			},
+			wantDate:   DateFromInt(2026, time.August, 8),
+			wantSource: ExpectedEndSourceStored,
+		},
+		{
+			name: "a cover crop sown with days to maturity but no stored end has no expected end (AC 6)",
+			planting: Planting{
+				Purpose:        PurposeCover,
+				MaturityFrom:   MaturityFromSowing,
+				SownAt:         DateFromInt(2026, time.April, 1),
+				DaysToMaturity: 120,
+			},
+			wantDate:   Date{},
+			wantSource: ExpectedEndSourceNone,
+		},
+		{
+			name: "a Cover Crop with a stored ExpectedEndAt uses it (AC 6)",
+			planting: Planting{
+				Purpose:       PurposeCover,
+				MaturityFrom:  MaturityFromSowing,
+				ExpectedEndAt: DateFromInt(2026, time.August, 8),
+			},
+			wantDate:   DateFromInt(2026, time.August, 8),
+			wantSource: ExpectedEndSourceStored,
+		},
+		{
+			name: "a food crop without DaysToMaturity or override is expected as ExpectedEndSourceNone",
+			planting: Planting{
+				Purpose:      PurposeFood,
+				MaturityFrom: MaturityFromSowing,
+				SownAt:       DateFromInt(2026, time.April, 1),
+			},
+			wantDate:   Date{},
+			wantSource: ExpectedEndSourceNone,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
