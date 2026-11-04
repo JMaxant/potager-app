@@ -39,33 +39,27 @@ func ExpectedEnd(p Planting) (Date, ExpectedEndSource) {
 		panic(fmt.Sprintf("ExpectedEnd: unknown Purpose %q", p.Purpose))
 	}
 
+	var start Date
 	switch p.MaturityFrom {
 	case MaturityFromSowing:
+		start = p.SownAt
 	case MaturityFromTransplant:
+		start = p.TransplantedAt
+		if start.IsZero() {
+			return Date{}, ExpectedEndSourceNeedsTransplant
+		}
 	default:
 		panic(fmt.Sprintf("ExpectedEnd: unknown MaturityFrom %q", p.MaturityFrom))
 	}
 
-	switch {
-	case p.MaturityFrom == MaturityFromTransplant && p.TransplantedAt.IsZero():
-		return Date{}, ExpectedEndSourceNeedsTransplant
+	days := p.DaysToMaturity
+	if p.MaturityDaysOverride != 0 {
+		days = p.MaturityDaysOverride
+	}
 
-	case p.MaturityFrom == MaturityFromTransplant && p.MaturityDaysOverride != 0:
-		return p.TransplantedAt.addDays(p.MaturityDaysOverride), ExpectedEndSourceComputed
-
-	case p.MaturityFrom == MaturityFromTransplant && p.DaysToMaturity != 0:
-		return p.TransplantedAt.addDays(p.DaysToMaturity), ExpectedEndSourceComputed
-
-	case p.MaturityFrom == MaturityFromSowing && p.SownAt.IsZero():
-		return Date{}, ExpectedEndSourceNone
-
-	case p.MaturityFrom == MaturityFromSowing && p.MaturityDaysOverride != 0:
-		return p.SownAt.addDays(p.MaturityDaysOverride), ExpectedEndSourceComputed
-
-	case p.MaturityFrom == MaturityFromSowing && p.DaysToMaturity != 0:
-		return p.SownAt.addDays(p.DaysToMaturity), ExpectedEndSourceComputed
-
-	default:
+	if start.IsZero() || days == 0 {
 		return Date{}, ExpectedEndSourceNone
 	}
+
+	return start.addDays(days), ExpectedEndSourceComputed
 }
