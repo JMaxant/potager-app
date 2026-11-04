@@ -94,7 +94,7 @@ func TestNetEffectPanics(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			defer func() {
-				// If need be, move r := recover() out of the check, and and t.Log(r)
+				// If need be, move r := recover() out of the check, and t.Log(r)
 				if r := recover(); r == nil {
 					t.Errorf("NetEffect(%q, %v, %q) did not panic",
 						tt.purpose, tt.fixesNitrogen, tt.demand)

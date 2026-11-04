@@ -26,7 +26,7 @@ const (
 	EffectEnriching         Effect = "enriching"
 )
 
-// NetEffect calculates the net effect of a crop on the soil. May panic if provided invalid demand or purpose.
+// NetEffect calculates the net effect of a crop on the soil. It panics if provided invalid demand or purpose.
 func NetEffect(purpose Purpose, fixesNitrogen bool, demand Demand) Effect {
 	switch {
 	case purpose == PurposeCover && fixesNitrogen:

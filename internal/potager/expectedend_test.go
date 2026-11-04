@@ -135,6 +135,28 @@ func TestExpectedEnd(t *testing.T) {
 			wantDate:   DateFromInt(2026, time.May, 11),
 			wantSource: ExpectedEndSourceComputed,
 		},
+		{
+			name: "an unknown purpose with a stored expected end uses it, without panicking",
+			planting: Planting{
+				Purpose:        "fodder",
+				SownAt:         DateFromInt(2026, time.April, 1),
+				DaysToMaturity: 30,
+				MaturityFrom:   MaturityFromSowing,
+				ExpectedEndAt:  DateFromInt(2026, time.May, 15),
+			},
+			wantDate:   DateFromInt(2026, time.May, 15),
+			wantSource: ExpectedEndSourceStored,
+		},
+		{
+			name: "a cover crop without MaturityFrom or stored expected end has none, without panicking",
+			planting: Planting{
+				Purpose:        PurposeCover,
+				SownAt:         DateFromInt(2026, time.April, 1),
+				DaysToMaturity: 30,
+			},
+			wantDate:   Date{},
+			wantSource: ExpectedEndSourceNone,
+		},
 	}
 
 	for _, tt := range tests {
@@ -144,6 +166,59 @@ func TestExpectedEnd(t *testing.T) {
 				t.Errorf("ExpectedEnd(%+v) = (%v, %q), want (%v, %q)",
 					tt.planting, gotDate, gotSource, tt.wantDate, tt.wantSource)
 			}
+		})
+	}
+}
+
+func TestExpectedEndPanics(t *testing.T) {
+	tests := []struct {
+		name     string
+		planting Planting
+	}{
+		{
+			name: "a food crop with an empty MaturityFrom panics",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				SownAt:         DateFromInt(2026, time.April, 1),
+				DaysToMaturity: 30,
+			},
+		},
+		{
+			name: "a food crop with an unknown MaturityFrom panics",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				SownAt:         DateFromInt(2026, time.April, 1),
+				DaysToMaturity: 30,
+				MaturityFrom:   "transplanting",
+			},
+		},
+		{
+			name: "an unknown purpose without a stored expected end panics",
+			planting: Planting{
+				Purpose:        "fodder",
+				SownAt:         DateFromInt(2026, time.April, 1),
+				DaysToMaturity: 30,
+				MaturityFrom:   MaturityFromSowing,
+			},
+		},
+		{
+			name: "a crop with an empty purpose panics",
+			planting: Planting{
+				SownAt:         DateFromInt(2026, time.April, 1),
+				DaysToMaturity: 30,
+				MaturityFrom:   MaturityFromSowing,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r == nil {
+					t.Errorf("ExpectedEnd(%+v) did not panic (improve message)", tt.planting)
+				}
+			}()
+			ExpectedEnd(tt.planting)
 		})
 	}
 }
