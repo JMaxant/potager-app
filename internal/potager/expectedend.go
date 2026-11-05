@@ -9,7 +9,7 @@ const (
 	MaturityFromTransplant MaturityFrom = "transplant"
 )
 
-// ExpectedEndSource tells what the source of expected end date is.
+// ExpectedEndSource tells where the date returned by ExpectedEnd comes from.
 type ExpectedEndSource string
 
 const (

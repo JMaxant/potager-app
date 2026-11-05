@@ -186,35 +186,32 @@ when both are set.
 square); converting to m² with an integer division by 10 000 (case 1 gives 3,
 case 6 gives 0).
 
-## Still open
+## Before closing T3
 
-- [ ] Edge case: a `transplant` species with no days to maturity and no
-      transplant date returns `needs transplant`, although the date alone would
-      compute nothing. Acceptable (the message also offers a manual end), or
-      should missing days win? If changed: a case and a sentence in the spec.
-- [ ] Doc comments:
-  - `ExpectedEndSource`: "tells what the source of expected end date is" →
-    e.g. "tells where the date returned by ExpectedEnd comes from".
-  - `Planting`: "an user input" → "a user input"; "rather that" → "rather
-    than".
-- [ ] Optional: panic prefix `Planting.ExpectedEnd:` rather than `ExpectedEnd:`.
-- [ ] From `go doc -all ./internal/potager` (2026-11-05), the domain read as a
-      whole:
-  - `InPlotBy(d Date)`: the doc comment says "day"; rename the parameter
-    `day`.
-  - `Purpose`, `Demand`, `Effect`: no doc comment, although they are domain
-    words.
-  - `DateFromTime`: "returns a Date in Europe/Paris timezone" contradicts the
-    `Date` decision (no zone). It returns the calendar day in Paris of that
-    instant.
-  - `Season(endedAt Date)` is a function while the rule says "reads only a
-    planting → method". Defensible (it takes a date), but decide:
-    `p.Season()` or keep it.
-- [ ] Before closing T3: a story test (or `Example`) following one tomato
-      through a season: tray in March → planned, planted out in May →
-      growing, end of July → due, harvested → ended.
-- [ ] Optional: a `TestNetEffectPanics` case for an empty purpose `""`.
-- [ ] Optional: rename `DateFromInt` to `NewDate` or `DateOf` (`civil`).
+- [ ] Doc comments of `Purpose`, `Demand`, `Effect` (`neteffect.go`): domain
+      words, none documented.
+- [ ] Doc comment of `DateFromTime` (`date.go`): "returns a Date in
+      Europe/Paris timezone" contradicts the `Date` decision (no zone). It
+      returns the calendar day in Paris of that instant.
+- [ ] A story test (or `Example`) following one tomato through a season: tray
+      in March → planned, planted out in May → growing, end of July → due,
+      harvested → ended.
+- [ ] Move what outlives T3 (the "With the store" list below) into the tasks
+      it belongs to, then delete this file and open the PR.
+
+### Closed on 2026-11-05
+
+- *`transplant` species, no days, no transplant date → `needs transplant`*:
+  kept. The screen says « Indiquez la date de plantation ou saisissez une fin
+  prévue », so it stays useful without days.
+- *`Season(endedAt Date)` as a function*: kept. It takes a date, not a
+  planting, so the "methods on `Planting`" rule does not apply; `web` groups
+  with `Season(p.EndedAt)`.
+- *`TestNetEffectPanics` case for `""`*: dropped. The `default` covers it, and
+  `TestPlanting_ExpectedEndPanics` already documents an empty purpose.
+- *Rename `DateFromInt`*: dropped. The name is clear and used in every test.
+- Done: `ExpectedEndSource` and `Planting` doc comments, `InPlotBy(day Date)`,
+  panic prefix `Planting.ExpectedEnd:` (the rule became a method).
 
 ## With the store (T4 or later)
 

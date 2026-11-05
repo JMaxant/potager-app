@@ -37,7 +37,7 @@ func (d Date) before(date Date) bool {
 	return d.t.Before(date.t)
 }
 
-// DateFromTime returns a Date in Europe/Paris timezone created from a time.Time object.
+// DateFromTime returns a Date created from a time.Time object. Day is on Europe/Paris timezone.
 func DateFromTime(date time.Time) Date {
 	date = date.In(locParis)
 	year, month, day := date.Date()

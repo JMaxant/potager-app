@@ -17,7 +17,7 @@ func TestPlot_AreaCm2(t *testing.T) {
 			want: 36000,
 		},
 		{
-			name: "a plot with only length has not set area",
+			name: "a plot with only length has not area",
 			p: Plot{
 				LengthCm: 100,
 				WidthCm:  0,
@@ -25,7 +25,7 @@ func TestPlot_AreaCm2(t *testing.T) {
 			want: 0,
 		},
 		{
-			name: "a plot with only width has not set area",
+			name: "a plot with only width has not area",
 			p: Plot{
 				LengthCm: 0,
 				WidthCm:  100,
@@ -33,7 +33,7 @@ func TestPlot_AreaCm2(t *testing.T) {
 			want: 0,
 		},
 		{
-			name: "a plot with no length or width has not set area",
+			name: "a plot with no length or width has not area",
 			p: Plot{
 				LengthCm: 0,
 				WidthCm:  0,

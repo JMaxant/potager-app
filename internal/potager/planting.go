@@ -6,8 +6,8 @@ import "fmt"
 // Planting represents one act of planting or sowing, with any purpose (food or cover).
 // A zero date or int means absent (e.g: a bought tomato plant).
 // DaysToMaturity and MaturityFrom come from the catalogue.
-// MaturityDaysOverride is an user input.
-// A false SownInPlace is a real value, rather that a Zero Value (i.e : it was either sown in place or it wasn't).
+// MaturityDaysOverride is a user input.
+// A false SownInPlace is a real value, rather than a Zero Value (i.e : it was either sown in place or it wasn't).
 type Planting struct {
 	Purpose              Purpose
 	MaturityFrom         MaturityFrom
@@ -66,7 +66,7 @@ func (p Planting) ExpectedEnd() (Date, ExpectedEndSource) {
 	case PurposeFood:
 
 	default:
-		panic(fmt.Sprintf("ExpectedEnd: unknown Purpose %q", p.Purpose))
+		panic(fmt.Sprintf("Planting.ExpectedEnd: unknown Purpose %q", p.Purpose))
 	}
 
 	var start Date
@@ -79,7 +79,7 @@ func (p Planting) ExpectedEnd() (Date, ExpectedEndSource) {
 			return Date{}, ExpectedEndSourceNeedsTransplant
 		}
 	default:
-		panic(fmt.Sprintf("ExpectedEnd: unknown MaturityFrom %q", p.MaturityFrom))
+		panic(fmt.Sprintf("Planting.ExpectedEnd: unknown MaturityFrom %q", p.MaturityFrom))
 	}
 
 	days := p.DaysToMaturity
@@ -95,10 +95,10 @@ func (p Planting) ExpectedEnd() (Date, ExpectedEndSource) {
 }
 
 // InPlotBy reports whether the planting has reached its plot on or before day: false while it waits in its tray. It ignores EndedAt: an ended planting is still "in plot".
-func (p Planting) InPlotBy(d Date) bool {
+func (p Planting) InPlotBy(day Date) bool {
 	occupancy := p.OccupiedFrom()
 
-	if occupancy.IsZero() || d.before(occupancy) {
+	if occupancy.IsZero() || day.before(occupancy) {
 		return false
 	}
 

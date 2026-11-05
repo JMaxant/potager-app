@@ -2,13 +2,17 @@ package potager
 
 import "fmt"
 
+// Purpose is why the crop is cultivated.
 type Purpose string
 
 const (
-	PurposeFood  Purpose = "food"
+	// PurposeFood is meant to be harvested.
+	PurposeFood Purpose = "food"
+	// PurposeCover is meant to be terminated.
 	PurposeCover Purpose = "cover"
 )
 
+// Demand is a crop's nitrogen needs.
 type Demand string
 
 const (
@@ -17,6 +21,7 @@ const (
 	DemandHeavy    Demand = "heavy"
 )
 
+// Effect is the impact of a crop on the soil. Computed in NetEffect.
 type Effect string
 
 const (
