@@ -1,3 +1,4 @@
+// Package potager holds the garden domain's rules.
 package potager
 
 import "fmt"
@@ -14,9 +15,24 @@ type Planting struct {
 	SownInPlace          bool
 	TransplantedAt       Date
 	ExpectedEndAt        Date
+	EndedAt              Date
 	DaysToMaturity       int
 	MaturityDaysOverride int
 }
+
+// Status is the state of a planting on a given day. It is a state, not a label: web picks Récoltée or Terminée from Purpose.
+type Status string
+
+const (
+	// StatusPlanned applies to crops not in their plot yet.
+	StatusPlanned Status = "planned"
+	// StatusGrowing applies to crops that occupy a plot.
+	StatusGrowing Status = "growing"
+	// StatusDue applies to crops that are past their expected end, and not ended.
+	StatusDue Status = "due"
+	// StatusEnded applies to crops that have terminated or harvested (relies on user input).
+	StatusEnded Status = "ended"
+)
 
 // OccupiedFrom returns the first day the planting holds its plot, or a zero Date while it waits in its tray (ADR 0008).
 func (p Planting) OccupiedFrom() Date {
@@ -76,4 +92,34 @@ func (p Planting) ExpectedEnd() (Date, ExpectedEndSource) {
 	}
 
 	return start.addDays(days), ExpectedEndSourceComputed
+}
+
+// InPlotBy reports whether the planting has reached its plot on or before day: false while it waits in its tray. It ignores EndedAt: an ended planting is still "in plot".
+func (p Planting) InPlotBy(d Date) bool {
+	occupancy := p.OccupiedFrom()
+
+	if occupancy.IsZero() || d.before(occupancy) {
+		return false
+	}
+
+	return true
+}
+
+// Status returns the state of the planting on today. An EndedAt always wins; a planting due is never ended by itself.
+func (p Planting) Status(today Date) Status {
+	if !p.EndedAt.IsZero() {
+		return StatusEnded
+	}
+
+	if !p.InPlotBy(today) {
+		return StatusPlanned
+	}
+
+	expected, _ := p.ExpectedEnd()
+
+	if !expected.IsZero() && expected.before(today) {
+		return StatusDue
+	}
+
+	return StatusGrowing
 }

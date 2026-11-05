@@ -15,6 +15,9 @@ Scope from `docs/step-1-tasks.md` (widened by #28 / ADR 0008):
 6. **Occupancy** — done, `OccupiedFrom` (ADR 0008).
 7. **`Status`** — **next**, four states, depends on occupancy, `ExpectedEnd` and a
    "today" passed as a parameter (ADR 0003).
+8. **Area** — `length_cm × width_cm` in m², added to T3 on 2026-11-05 (it is in
+   the spec's *Derived values*). Probably a method on a `Plot` type; the
+   `3,6 m²` formatting belongs to `web`.
 
 For each rule: the test plan in French plus one model case from Claude, then the
 owner writes the remaining cases, then the implementation, then the sabotages.

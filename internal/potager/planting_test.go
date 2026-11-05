@@ -31,7 +31,7 @@ func TestPlanting_OccupiedFrom(t *testing.T) {
 			want: Date{},
 		},
 		{
-			name: "fava beans sown in place on 15/11/2025 occupies a plot from is sowing date",
+			name: "fava beans sown in place on 15/11/2025 occupies a plot from its sowing date",
 			planting: Planting{
 				MaturityFrom: MaturityFromSowing,
 				SownAt:       DateFromInt(2025, time.November, 15),
@@ -40,7 +40,7 @@ func TestPlanting_OccupiedFrom(t *testing.T) {
 			want: DateFromInt(2025, time.November, 15),
 		},
 		{
-			name: "bought lettuce seedlings, transplanted on 01/05/2026 occupies a plot from a plot from its TransplantedAt date",
+			name: "bought lettuce seedlings, transplanted on 01/05/2026 occupies a plot from its TransplantedAt date",
 			planting: Planting{
 				MaturityFrom:   MaturityFromSowing,
 				TransplantedAt: DateFromInt(2026, time.May, 1),
@@ -335,6 +335,221 @@ func TestPlanting_ExpectedEndPanics(t *testing.T) {
 				}
 			}()
 			tt.planting.ExpectedEnd()
+		})
+	}
+}
+
+func TestPlanting_Status(t *testing.T) {
+	tests := []struct {
+		name     string
+		planting Planting
+		today    Date
+		want     Status
+	}{
+		{
+			name: "a tomato planted out on 10/05/2026, expected on 29/07/2026, is growing on 01/07/2026",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromTransplant,
+				SownInPlace:    false,
+				TransplantedAt: DateFromInt(2026, time.May, 10),
+				DaysToMaturity: 80,
+			},
+			today: DateFromInt(2026, time.July, 1),
+			want:  StatusGrowing,
+		},
+		{
+			name: "a crop harvested on 05/08/2026, is ended on 10/08/2026",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromTransplant,
+				SownInPlace:    false,
+				TransplantedAt: DateFromInt(2026, time.May, 10),
+				DaysToMaturity: 80,
+				EndedAt:        DateFromInt(2026, time.August, 5),
+			},
+			today: DateFromInt(2026, time.August, 10),
+			want:  StatusEnded,
+		},
+		{
+			name: "a tomato sown on 15/03/2026, still in its tray, is Planned on 01/04/2026",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromTransplant,
+				SownAt:         DateFromInt(2026, time.March, 15),
+				DaysToMaturity: 80,
+			},
+			today: DateFromInt(2026, time.April, 1),
+			want:  StatusPlanned,
+		},
+		{
+			name: "a crop whose transplant is expected on 20/05/2026, is Planned on 01/05/2026",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromTransplant,
+				TransplantedAt: DateFromInt(2026, time.May, 20),
+				DaysToMaturity: 80,
+			},
+			today: DateFromInt(2026, time.May, 1),
+			want:  StatusPlanned,
+		},
+		{
+			name: "a crop past its expected end on 15/07/2026, not ended, is due on 01/08/2026",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromTransplant,
+				TransplantedAt: DateFromInt(2026, time.May, 1),
+				ExpectedEndAt:  DateFromInt(2026, time.July, 15),
+			},
+			today: DateFromInt(2026, time.August, 1),
+			want:  StatusDue,
+		},
+		{
+			name: "a crop expected on 29/07/2026, is Growing on the 29/07/2026",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromTransplant,
+				TransplantedAt: DateFromInt(2026, time.May, 1),
+				ExpectedEndAt:  DateFromInt(2026, time.July, 29),
+			},
+			today: DateFromInt(2026, time.July, 29),
+			want:  StatusGrowing,
+		},
+		{
+			name: "a cover crop without an expected end, sown in place on 15/11/2025, is still growing on 01/08/2026",
+			planting: Planting{
+				Purpose:      PurposeCover,
+				MaturityFrom: MaturityFromSowing,
+				SownAt:       DateFromInt(2025, time.November, 15),
+				SownInPlace:  true,
+			},
+			today: DateFromInt(2026, time.August, 1),
+			want:  StatusGrowing,
+		},
+		{
+			name: "a crop whose ExpectedEnd is passed and EndedAt is provided, is Ended on its EndedAt",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromTransplant,
+				TransplantedAt: DateFromInt(2026, time.May, 1),
+				ExpectedEndAt:  DateFromInt(2026, time.August, 1),
+				EndedAt:        DateFromInt(2026, time.July, 20),
+			},
+			today: DateFromInt(2026, time.August, 10),
+			want:  StatusEnded,
+		},
+		{
+			name: "a crop planted on the same day is Growing",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromTransplant,
+				TransplantedAt: DateFromInt(2026, time.April, 1),
+				DaysToMaturity: 80,
+			},
+			today: DateFromInt(2026, time.April, 1),
+			want:  StatusGrowing,
+		},
+		{
+			name: "a cover crop with an ExpectedEndAt provided is due",
+			planting: Planting{
+				Purpose:       PurposeCover,
+				MaturityFrom:  MaturityFromSowing,
+				SownAt:        DateFromInt(2026, time.April, 1),
+				ExpectedEndAt: DateFromInt(2026, time.July, 20),
+				SownInPlace:   true,
+			},
+			today: DateFromInt(2026, time.July, 21),
+			want:  StatusDue,
+		},
+		{
+			name: "a food crop without ExpectedEndAt or DaysToMaturity is Growing months later",
+			planting: Planting{
+				Purpose:      PurposeFood,
+				MaturityFrom: MaturityFromSowing,
+				SownAt:       DateFromInt(2026, time.April, 1),
+				SownInPlace:  true,
+			},
+			today: DateFromInt(2026, time.August, 1),
+			want:  StatusGrowing,
+		},
+		{
+			name: "a bought lettuce planted out on 01/04/2026 is growing, with no expected end",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromSowing,
+				TransplantedAt: DateFromInt(2026, time.April, 1),
+				DaysToMaturity: 60,
+			},
+			today: DateFromInt(2026, time.May, 1),
+			want:  StatusGrowing,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.planting.Status(tt.today)
+			if got != tt.want {
+				t.Errorf("Planting.Status() = Planting %+v, today %v : %v, want %v", tt.planting, tt.today, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPlanting_InPlotBy(t *testing.T) {
+	tests := []struct {
+		name     string
+		planting Planting
+		today    Date
+		want     bool
+	}{
+		{
+			name: "a crop is still in its tray",
+			planting: Planting{
+				Purpose:     PurposeFood,
+				SownAt:      DateFromInt(2026, time.March, 1),
+				SownInPlace: false,
+			},
+			today: DateFromInt(2026, time.April, 1),
+			want:  false,
+		},
+		{
+			name: "a crop was transplanted before the given day",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromTransplant,
+				TransplantedAt: DateFromInt(2026, time.April, 1),
+			},
+			today: DateFromInt(2026, time.May, 1),
+			want:  true,
+		},
+		{
+			name: "a crop was transplanted on the given day",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromTransplant,
+				TransplantedAt: DateFromInt(2026, time.April, 1),
+			},
+			today: DateFromInt(2026, time.April, 1),
+			want:  true,
+		},
+		{
+			name: "a crop to be transplanted after the given day is not in its plot yet",
+			planting: Planting{
+				Purpose:        PurposeFood,
+				MaturityFrom:   MaturityFromTransplant,
+				TransplantedAt: DateFromInt(2026, time.June, 1),
+			},
+			today: DateFromInt(2026, time.May, 1),
+			want:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.planting.InPlotBy(tt.today)
+			if got != tt.want {
+				t.Errorf("Planting.InPlotBy() = Planting %+v, today %v %v, want %v", tt.planting, tt.today, got, tt.want)
+			}
 		})
 	}
 }
