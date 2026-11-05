@@ -50,6 +50,10 @@ The domain rules assume a few things that only later tasks can provide:
   where a form value or a column becomes an enum. They return an `error` and
   never panic, because bad data at the boundary is expected and is not a bug.
   The domain `switch` statements panic only on values that got past them.
+- **Task 7:** `Planting.DaysToMaturity` is one number. The query fills it with
+  `MAX(days_to_maturity)` over the planting's varieties (`design.md`, *Expected
+  end*), and step 1 has a single variety. A planting with no variety gets `0`,
+  so it has no expected end (`ExpectedEndSourceNone`, already tested).
 - **Task 11:** `import _ "time/tzdata"` in `cmd/potager`. A minimal Docker image
   has no tzdata, so `DateFromTime` could not load `Europe/Paris`.
 - **Optional, any time:** the `exhaustive` linter (golangci-lint), to catch a
