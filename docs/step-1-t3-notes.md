@@ -12,8 +12,8 @@ Scope from `docs/step-1-tasks.md` (widened by #28 / ADR 0008):
 3. **`NetEffect`** — done. The table in `docs/design.md`.
 4. **`ExpectedEnd`** — done, panics included (`f1cd089`).
 5. **`StartDate`** — done.
-6. **Occupancy** — **next**, needs `SownInPlace` in `Planting` (ADR 0008).
-7. **`Status`** — four states, depends on occupancy, `ExpectedEnd` and a
+6. **Occupancy** — done, `OccupiedFrom` (ADR 0008).
+7. **`Status`** — **next**, four states, depends on occupancy, `ExpectedEnd` and a
    "today" passed as a parameter (ADR 0003).
 
 For each rule: the test plan in French plus one model case from Claude, then the
@@ -60,9 +60,25 @@ The zero value only works where zero cannot be real data. It would not work for
 an optional `bool`; `SownInPlace` is fine because the column is always set
 (defaulted from the species in the form), so `false` is real data, not absence.
 
+### Rules on a `Planting` are methods
+
+Since `b874909`: `p.StartDate()`, `p.OccupiedFrom()`, `p.ExpectedEnd()`, and
+`p.Status(today)` to come. Value receivers. A rule that reads only a planting's
+fields is a property of that value, like `t.IsZero()` or `d.addDays(n)`; the
+spec groups them under *Derived values*. A rule that combines independent
+inputs stays a function: `NetEffect(purpose, fixesNitrogen, demand)`. Methods
+and their tests live in `planting.go` / `planting_test.go`, tests named
+`TestPlanting_Method` (checked by `go vet`). `expectedend.go` keeps the
+`MaturityFrom` and `ExpectedEndSource` enums.
+
+`Planting` fields: `MaturityFrom` and `DaysToMaturity` are catalogue facts
+(species, variety); every other field comes from `plantings`, including
+`MaturityDaysOverride`, entered by the gardener. With mixes (step 2), only the
+catalogue facts become a list.
+
 ### `ExpectedEnd`
 
-`func ExpectedEnd(p Planting) (Date, ExpectedEndSource)`. Order of the guard
+`func (p Planting) ExpectedEnd() (Date, ExpectedEndSource)`. Order of the guard
 clauses:
 
 1. `ExpectedEndAt` set → `stored`, nothing else is read.
@@ -73,15 +89,15 @@ clauses:
 5. No start date (a bought plant of a sown species) or no days → `none`.
 6. `start.addDays(days)` → `computed`.
 
-Tests: `TestExpectedEnd` 13 cases, `TestExpectedEndPanics` 4 cases. Two cases
-of `TestExpectedEnd` assert that a panic does **not** happen (unknown purpose
+Tests: `TestPlanting_ExpectedEnd` 13 cases, `TestPlanting_ExpectedEndPanics` 4
+cases. Two cases of `TestPlanting_ExpectedEnd` assert that a panic does **not** happen (unknown purpose
 with a stored value, cover crop without `MaturityFrom`): they pin where the
 checks sit.
 
 ### `StartDate`
 
-`func StartDate(p Planting) Date`: `SownAt` when set, else `TransplantedAt`;
-`Date{}` when neither is set. `TestStartDate` 5 cases.
+`func (p Planting) StartDate() Date`: `SownAt` when set, else `TransplantedAt`;
+`Date{}` when neither is set. `TestPlanting_StartDate` 5 cases.
 
 Decided on 2026-11-05: no real minimum with `before`. A transplant before the
 sowing is **invalid data**, not a case to compute: a plant is always sown
@@ -94,14 +110,27 @@ plot page into a 500).
 Sabotage kept: the scaffold's `COALESCE(transplanted_at, sown_at)` makes
 case 1 fail, the bug ADR 0008 rejects.
 
-## Next: occupancy, then `Status`
+### `OccupiedFrom`
 
-- [ ] **Occupancy**: add `SownInPlace bool` to `Planting`; from `SownAt` when
-      set, from `TransplantedAt` otherwise (ADR 0008, AC 18). Name to decide
-      (`OccupiedFrom`?). A tray seedling not yet planted out occupies nothing:
-      `Date{}`.
-- [ ] **`Status`**: `Planting` has no `EndedAt` yet; add it. Uses occupancy
-      (not `StartDate`) for *Prévue*, `ExpectedEnd` for *À récolter*.
+`func (p Planting) OccupiedFrom() Date`: `SownAt` when `SownInPlace`, else
+`TransplantedAt`, so a tray seedling not yet planted out occupies nothing
+(`Date{}`). Only the start: the end is `ended_at`, read by `Status`.
+`SownInPlace` is recorded, never inferred from `MaturityFrom` (ADR 0008).
+Invalid data is not tested: "sown in place" excludes a transplant date in
+validation. `TestPlanting_OccupiedFrom` 5 cases.
+
+Sabotages: the scaffold's `COALESCE` makes the tray-seedling case fail;
+inferring from `MaturityFrom` makes the "sowing species sown in a tray" case
+fail.
+
+## Next: `Status`
+
+- [ ] `Planting` has no `EndedAt` yet; add it.
+- [ ] Signature: `func (p Planting) Status(today Date) Status`? The type name
+      and the label (food/cover) to decide: the method returns the state, `web`
+      picks the French label from `Purpose`.
+- [ ] Uses `OccupiedFrom` (not `StartDate`) for *Prévue*, `ExpectedEnd` for
+      *À récolter*. Test plan in French plus one model case, as before.
 
 ## Still open
 
@@ -110,11 +139,11 @@ case 1 fail, the bug ADR 0008 rejects.
       compute nothing. Acceptable (the message also offers a manual end), or
       should missing days win? If changed: a case and a sentence in the spec.
 - [ ] Doc comments:
-  - `ExpectedEnd`: "unknown of MaturityFrom" → "or".
   - `ExpectedEndSource`: "tells what the source of expected end date is" →
     e.g. "tells where the date returned by ExpectedEnd comes from".
-  - `Planting`: "Maturity days fields" → name `DaysToMaturity` and
-    `MaturityDaysOverride`.
+  - `Planting`: "an user input" → "a user input"; "rather that" → "rather
+    than".
+- [ ] Optional: panic prefix `Planting.ExpectedEnd:` rather than `ExpectedEnd:`.
 - [ ] Optional: a `TestNetEffectPanics` case for an empty purpose `""`.
 - [ ] Optional: rename `DateFromInt` to `NewDate` or `DateOf` (`civil`).
 
@@ -122,7 +151,6 @@ case 1 fail, the bug ADR 0008 rejects.
 
 - [ ] Migration for `plantings`: `CHECK (transplanted_at >= sown_at)`, the
       invariant `StartDate` relies on (see `docs/design.md`).
-
 - [ ] `ParsePurpose`, `ParseMaturityFrom`, `ParseDemand`
       (`func(string) (X, error)`, like `strconv.ParseBool`): the boundary where
       a column becomes an enum. An `error` there, not a panic: bad data at the

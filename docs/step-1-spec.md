@@ -210,7 +210,7 @@ on 15/03/2026; a lettuce bought and planted out on 01/05/2026 starts on
 01/05/2026. It orders the plot sections and bounds `ended_at` and
 `expected_end_at` in validation.
 
-**Occupancy** — when the planting holds its plot: from `sown_at` when
+**Occupancy** — `OccupiedFrom`. When the planting holds its plot: from `sown_at` when
 `sown_in_place`, from `transplanted_at` otherwise (ADR 0008). The same tray
 tomato occupies its plot from 10/05/2026, and nothing before; broad beans sown
 in place on 15/11/2025 occupy it from that day. It decides the plot sections and
