@@ -63,7 +63,7 @@ func TestPlanting_OccupiedFrom(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.planting.OccupiedFrom()
 			if got != tt.want {
-				t.Errorf("Planting.OccupiedFrom(%+v) got = %v, want %v", got, tt.want)
+				t.Errorf("Planting.OccupiedFrom() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
