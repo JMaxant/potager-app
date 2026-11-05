@@ -5,7 +5,123 @@ import (
 	"time"
 )
 
-func TestExpectedEnd(t *testing.T) {
+func TestPlanting_OccupiedFrom(t *testing.T) {
+	tests := []struct {
+		name     string
+		planting Planting
+		want     Date
+	}{
+		{
+			name: "A tomato sown in a tray on 15/03/2026 occupies its plot from its planting out on 10/05/2026",
+			planting: Planting{
+				MaturityFrom:   MaturityFromTransplant,
+				SownAt:         DateFromInt(2026, time.March, 15),
+				SownInPlace:    false,
+				TransplantedAt: DateFromInt(2026, time.May, 10),
+			},
+			want: DateFromInt(2026, time.May, 10),
+		},
+		{
+			name: "a tomato sown in a tray on 15/03/2026 but not yet planted does not occupy a plot",
+			planting: Planting{
+				MaturityFrom: MaturityFromTransplant,
+				SownAt:       DateFromInt(2026, time.March, 15),
+				SownInPlace:  false,
+			},
+			want: Date{},
+		},
+		{
+			name: "fava beans sown in place on 15/11/2025 occupies a plot from is sowing date",
+			planting: Planting{
+				MaturityFrom: MaturityFromSowing,
+				SownAt:       DateFromInt(2025, time.November, 15),
+				SownInPlace:  true,
+			},
+			want: DateFromInt(2025, time.November, 15),
+		},
+		{
+			name: "bought lettuce seedlings, transplanted on 01/05/2026 occupies a plot from a plot from its TransplantedAt date",
+			planting: Planting{
+				MaturityFrom:   MaturityFromSowing,
+				TransplantedAt: DateFromInt(2026, time.May, 1),
+				SownInPlace:    false,
+			},
+			want: DateFromInt(2026, time.May, 1),
+		},
+		{
+			name: "lettuce sown, not yet transplanted, does not occupy a plot, although its species is sown",
+			planting: Planting{
+				MaturityFrom: MaturityFromSowing,
+				SownAt:       DateFromInt(2026, time.May, 1),
+				SownInPlace:  false,
+			},
+			want: Date{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.planting.OccupiedFrom()
+			if got != tt.want {
+				t.Errorf("Planting.OccupiedFrom(%+v) got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPlanting_StartDate(t *testing.T) {
+	tests := []struct {
+		name     string
+		planting Planting
+		want     Date
+	}{
+		{
+			name: "a tomato sown in a tray on 15/03/2026 and planted out on 10/05/2026 starts on 15/03/2026",
+			planting: Planting{
+				SownAt:         DateFromInt(2026, time.March, 15),
+				TransplantedAt: DateFromInt(2026, time.May, 10),
+			},
+			want: DateFromInt(2026, time.March, 15),
+		},
+		{
+			name: "A lettuce bought, planted only on 01/05/2026, starts on 01/05/2026",
+			planting: Planting{
+				TransplantedAt: DateFromInt(2026, time.May, 1),
+			},
+			want: DateFromInt(2026, time.May, 1),
+		},
+		{
+			name: "Fava beans sown on 15/11/2026, no transplant, starts on 15/11/2026",
+			planting: Planting{
+				SownAt: DateFromInt(2026, time.November, 15),
+			},
+			want: DateFromInt(2026, time.November, 15),
+		},
+		{
+			name: "A crop sown and transplanted on the same day returns that day",
+			planting: Planting{
+				SownAt:         DateFromInt(2026, time.March, 15),
+				TransplantedAt: DateFromInt(2026, time.March, 15),
+			},
+			want: DateFromInt(2026, time.March, 15),
+		},
+		{
+			name:     "A crop with or transplantation date provided return a zero Date",
+			planting: Planting{},
+			want:     Date{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.planting.StartDate()
+			if got != tt.want {
+				t.Errorf("Planting.StartDate() = Planting %+v,  %v, want %v", tt.planting, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPlanting_ExpectedEnd(t *testing.T) {
 	tests := []struct {
 		name       string
 		planting   Planting
@@ -161,16 +277,16 @@ func TestExpectedEnd(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotDate, gotSource := ExpectedEnd(tt.planting)
+			gotDate, gotSource := tt.planting.ExpectedEnd()
 			if gotDate != tt.wantDate || gotSource != tt.wantSource {
-				t.Errorf("ExpectedEnd(%+v) = (%v, %q), want (%v, %q)",
+				t.Errorf("Planting.ExpectedEnd() = Planting %+v : (%v, %q), want (%v, %q)",
 					tt.planting, gotDate, gotSource, tt.wantDate, tt.wantSource)
 			}
 		})
 	}
 }
 
-func TestExpectedEndPanics(t *testing.T) {
+func TestPlanting_ExpectedEndPanics(t *testing.T) {
 	tests := []struct {
 		name     string
 		planting Planting
@@ -215,10 +331,10 @@ func TestExpectedEndPanics(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			defer func() {
 				if r := recover(); r == nil {
-					t.Errorf("ExpectedEnd(%+v) did not panic (improve message)", tt.planting)
+					t.Errorf("Planting.ExpectedEnd(): Planting %+v did not panic", tt.planting)
 				}
 			}()
-			ExpectedEnd(tt.planting)
+			tt.planting.ExpectedEnd()
 		})
 	}
 }
