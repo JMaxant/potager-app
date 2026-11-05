@@ -13,11 +13,9 @@ Scope from `docs/step-1-tasks.md` (widened by #28 / ADR 0008):
 4. **`ExpectedEnd`** — done, panics included (`f1cd089`).
 5. **`StartDate`** — done.
 6. **Occupancy** — done, `OccupiedFrom` (ADR 0008).
-7. **`Status`** — **next**, four states, depends on occupancy, `ExpectedEnd` and a
-   "today" passed as a parameter (ADR 0003).
-8. **Area** — `length_cm × width_cm` in m², added to T3 on 2026-11-05 (it is in
-   the spec's *Derived values*). Probably a method on a `Plot` type; the
-   `3,6 m²` formatting belongs to `web`.
+7. **`Status`** — done, with `InPlotBy` (`b62ae4e`).
+8. **Area** — **next**, added to T3 on 2026-11-05 (it is in the spec's
+   *Derived values*). Plan below.
 
 For each rule: the test plan in French plus one model case from Claude, then the
 owner writes the remaining cases, then the implementation, then the sabotages.
@@ -26,14 +24,14 @@ owner writes the remaining cases, then the implementation, then the sabotages.
 
 ### `Date`
 
-| Decision | Why |
-| --- | --- |
+| Decision                                                     | Why                                                                                                                                                                                                                                                                                                                                   |
+|--------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `struct{ t time.Time }`, unexported field, **not** embedding | Embedding promotes every `time.Time` method (`Hour`, `Add`, `In`, `Before(time.Time)`…): the "no time, no zone" rule would only be a convention. A private field exposes only the methods we write. Embedding suits a decorator that passes everything through (`statusRecorder`); a private field suits a value type that restricts. |
-| `t` is always **midnight UTC** | With `time.Date(y, m, d, 0, 0, 0, 0, time.UTC)`, two `Date` values for the same day are bit-for-bit identical, so `==` works. Checked: midnight in `Europe/Paris` gives `==` false, because every `LoadLocation` returns a new `*time.Location` pointer. |
-| Paris appears **in one place only**: `DateFromTime` | The zone only matters to turn an instant into a calendar day (ADR 0003). `DateFromInt` needs no zone. |
-| `DateFromTime` = `In(paris).Date()`, then `DateFromInt` | A single function builds the struct, so the "midnight UTC" rule lives in one place. |
-| No `Year()` for now | `Season` lives in `potager` and can read `d.t.Year()`: `t` is private to the package, not to the type. Add it when `web` needs it. |
-| `addDays` / `before` in lower case | Fine while the rules live in `potager`. The capital letter decides visibility: it is a scope decision, not a style one. |
+| `t` is always **midnight UTC**                               | With `time.Date(y, m, d, 0, 0, 0, 0, time.UTC)`, two `Date` values for the same day are bit-for-bit identical, so `==` works. Checked: midnight in `Europe/Paris` gives `==` false, because every `LoadLocation` returns a new `*time.Location` pointer.                                                                              |
+| Paris appears **in one place only**: `DateFromTime`          | The zone only matters to turn an instant into a calendar day (ADR 0003). `DateFromInt` needs no zone.                                                                                                                                                                                                                                 |
+| `DateFromTime` = `In(paris).Date()`, then `DateFromInt`      | A single function builds the struct, so the "midnight UTC" rule lives in one place.                                                                                                                                                                                                                                                   |
+| No `Year()` for now                                          | `Season` lives in `potager` and can read `d.t.Year()`: `t` is private to the package, not to the type. Add it when `web` needs it.                                                                                                                                                                                                    |
+| `addDays` / `before` in lower case                           | Fine while the rules live in `potager`. The capital letter decides visibility: it is a scope decision, not a style one.                                                                                                                                                                                                               |
 
 ### Enumerations
 
@@ -126,14 +124,67 @@ Sabotages: the scaffold's `COALESCE` makes the tray-seedling case fail;
 inferring from `MaturityFrom` makes the "sowing species sown in a tray" case
 fail.
 
-## Next: `Status`
+### `Status` and `InPlotBy`
 
-- [ ] `Planting` has no `EndedAt` yet; add it.
-- [ ] Signature: `func (p Planting) Status(today Date) Status`? The type name
-      and the label (food/cover) to decide: the method returns the state, `web`
-      picks the French label from `Purpose`.
-- [ ] Uses `OccupiedFrom` (not `StartDate`) for *Prévue*, `ExpectedEnd` for
-      *À récolter*. Test plan in French plus one model case, as before.
+`func (p Planting) Status(today Date) Status`: the spec's table, read top-down,
+first match wins:
+
+1. `EndedAt` set → `ended`. Only the gardener ends a planting: an expected end
+   that has passed makes it `due`, never `ended`.
+2. `!p.InPlotBy(today)` → `planned`.
+3. `ExpectedEnd()` set and strictly before today → `due`. On the expected day
+   itself the planting is still `growing` (decided 2026-11-05).
+4. Otherwise `growing`.
+
+`Status` combines `InPlotBy` and `ExpectedEnd`; it never reads `MaturityFrom`,
+`Purpose` or the raw dates. A first version that re-derived occupancy from
+`MaturityFrom` passed 9 cases and was wrong on five situations: the reason for
+cases 10 to 12.
+
+- `Status` is a `string` enum (`planned`, `growing`, `due`, `ended`) although
+  it is never stored: the zero value `""` is no valid state, so a forgotten
+  value or a stub shows up; readable test output; same as the other enums. An
+  `iota` enum would make `0` a valid state unless it starts at `iota + 1`.
+- It is a state, not a label: `web` picks *Récoltée* / *Terminée*,
+  *À récolter* / *À terminer* from `Purpose`.
+- `func (p Planting) InPlotBy(day Date) bool`: occupancy started on or before
+  `day`; false while the seedling waits in its tray. It handles the zero
+  `OccupiedFrom()` once, so callers never compare `Date{}` (year 1, before
+  every real day). It ignores `EndedAt`. `web` reuses it for the *À venir*
+  section. A method rather than `inPlotBy(occupiedFrom, day Date)`: with two
+  dates, a caller could pass `StartDate()` and the compiler would accept it.
+
+Tests: `TestPlanting_Status` 12 cases, `TestPlanting_InPlotBy` 4 cases.
+Sabotages: `StartDate()` for occupancy (tray tomato fails), `due` checked
+before `ended` (case 8, today after the expected end, fails), `due` on the day
+itself (case 6 fails), the `IsZero` check dropped (tray tomato fails).
+
+## Next: Area
+
+Rule (`step-1-spec.md`, *Area*): `length_cm × width_cm`, displayed in m² with
+one decimal. Both dimensions are optional (> 0, ≤ 100 m); the area shows only
+when both are set.
+
+- New type `Plot` in `plot.go`, with only the fields the rule needs for now:
+  `LengthCm` and `WidthCm` (`int`, `0` = absent, as for maturity days).
+- `func (p Plot) AreaCm2() int`: the area in **cm²**, `0` when a dimension is
+  missing. The domain keeps an exact integer; `web` turns 36 000 cm² into
+  `3,6 m²` (÷ 10 000, one decimal, comma). No `float64` in the domain: no
+  rounding question in the tests, `==` works.
+
+### `TestPlot_AreaCm2` plan
+
+1. **(model)** Planche de 3,00 × 1,20 m (300 × 120 cm) → 36 000 cm² (3,6 m²).
+2. Longueur seule → 0.
+3. Largeur seule → 0.
+4. Aucune dimension → 0.
+5. Le maximum, 100 × 100 m → 100 000 000 cm².
+6. Le minimum, 1 × 1 cm → 1 cm².
+
+**Done when:** `go test ./internal/potager/ -run TestPlot_AreaCm2 -v` →
+**6 cases PASS**. Sabotages: `length × length` (case 1 fails, the plot is not
+square); converting to m² with an integer division by 10 000 (case 1 gives 3,
+case 6 gives 0).
 
 ## Still open
 
@@ -147,6 +198,21 @@ fail.
   - `Planting`: "an user input" → "a user input"; "rather that" → "rather
     than".
 - [ ] Optional: panic prefix `Planting.ExpectedEnd:` rather than `ExpectedEnd:`.
+- [ ] From `go doc -all ./internal/potager` (2026-11-05), the domain read as a
+      whole:
+  - `InPlotBy(d Date)`: the doc comment says "day"; rename the parameter
+    `day`.
+  - `Purpose`, `Demand`, `Effect`: no doc comment, although they are domain
+    words.
+  - `DateFromTime`: "returns a Date in Europe/Paris timezone" contradicts the
+    `Date` decision (no zone). It returns the calendar day in Paris of that
+    instant.
+  - `Season(endedAt Date)` is a function while the rule says "reads only a
+    planting → method". Defensible (it takes a date), but decide:
+    `p.Season()` or keep it.
+- [ ] Before closing T3: a story test (or `Example`) following one tomato
+      through a season: tray in March → planned, planted out in May →
+      growing, end of July → due, harvested → ended.
 - [ ] Optional: a `TestNetEffectPanics` case for an empty purpose `""`.
 - [ ] Optional: rename `DateFromInt` to `NewDate` or `DateOf` (`civil`).
 
