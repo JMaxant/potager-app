@@ -200,9 +200,11 @@ values are always preserved on re-render.
 Computed by `internal/potager`, never stored, displayed wherever a planting
 appears.
 
-**Start date** — `StartDate`. The earlier of `sown_at` and `transplanted_at`:
+**Start date** — `StartDate`. `sown_at` when set, `transplanted_at` otherwise:
 the sowing for a crop the gardener sowed, in place or in a tray; the transplant
-for a plant bought ready to plant out. It dates the crop, not its place in the
+for a plant bought ready to plant out. It is the earlier of the two dates,
+since validation (and the database) refuse a transplant before the sowing;
+`StartDate` relies on that rule rather than checking it. It dates the crop, not its place in the
 plot: a tomato sown in a tray on 15/03/2026 and planted out on 10/05/2026 starts
 on 15/03/2026; a lettuce bought and planted out on 01/05/2026 starts on
 01/05/2026. It orders the plot sections and bounds `ended_at` and

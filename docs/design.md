@@ -94,7 +94,8 @@ families ──< species ──< varieties ──< planting_varieties >── pl
 - **`plantings`** — one plot, one `purpose`, one set of dates, and
   `sown_in_place`. Occupancy is a generated `daterange` starting at `sown_at`
   when `sown_in_place`, at `transplanted_at` otherwise, and null while a
-  seedling waits in its tray (ADR 0008).
+  seedling waits in its tray (ADR 0008). `CHECK (transplanted_at >= sown_at)`:
+  a plant is sown before it is planted out, and the start date relies on it.
 - **`planting_varieties`** — components of a planting, with `quantity` and
   `seed_rate_g_m2`.
 

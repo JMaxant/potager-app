@@ -23,7 +23,7 @@ const (
 	ExpectedEndSourceNeedsTransplant ExpectedEndSource = "needs transplant"
 )
 
-// ExpectedEnd returns the expected end date of a planting, and the source of that date. It panics if Purpose is unknown of MaturityFrom is unknown for a food crop.
+// ExpectedEnd returns the expected end date of a planting, and the source of that date. It panics if Purpose is unknown or MaturityFrom is unknown for a food crop.
 func ExpectedEnd(p Planting) (Date, ExpectedEndSource) {
 	// If a Planting provides an ExpectedEndAt, ExpectedEndAt wins.
 	if !p.ExpectedEndAt.IsZero() {
