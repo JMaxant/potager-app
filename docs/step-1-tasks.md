@@ -39,6 +39,22 @@ S2 and S3 follow S1; S4 needs S2 and task 1. Tasks 2 and 3 only need task 1 (tas
 7 needs 3 and 6. 8 needs 6. 9 needs 6. 10 needs 7. 11 needs everything else, though
 the Compose and CI parts can start as soon as task 1 exists.
 
+## Carried over from task 3
+
+The domain rules assume a few things that only later tasks can provide:
+
+- **Task 2:** `CHECK (transplanted_at >= sown_at)` on `plantings`. `StartDate`
+  relies on this invariant and does not check it (see `design.md`).
+- **Task 6:** `ParsePurpose`, `ParseMaturityFrom` and `ParseDemand`, shaped
+  `func(string) (X, error)` like `strconv.ParseBool`. They are the boundary
+  where a form value or a column becomes an enum. They return an `error` and
+  never panic, because bad data at the boundary is expected and is not a bug.
+  The domain `switch` statements panic only on values that got past them.
+- **Task 11:** `import _ "time/tzdata"` in `cmd/potager`. A minimal Docker image
+  has no tzdata, so `DateFromTime` could not load `Europe/Paris`.
+- **Optional, any time:** the `exhaustive` linter (golangci-lint), to catch a
+  `switch` on an enum that forgets a constant.
+
 ## Design iterations
 
 After task 5 and after task 8, stop for a short review of the spec against what
