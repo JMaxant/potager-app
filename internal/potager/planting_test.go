@@ -31,7 +31,7 @@ func TestPlanting_OccupiedFrom(t *testing.T) {
 			want: Date{},
 		},
 		{
-			name: "fava beans sown in place on 15/11/2025 occupies a plot from its sowing date",
+			name: "fava beans sown in place on 15/11/2025 occupy a plot from  their sowing date",
 			planting: Planting{
 				MaturityFrom: MaturityFromSowing,
 				SownAt:       DateFromInt(2025, time.November, 15),
@@ -40,7 +40,7 @@ func TestPlanting_OccupiedFrom(t *testing.T) {
 			want: DateFromInt(2025, time.November, 15),
 		},
 		{
-			name: "bought lettuce seedlings, transplanted on 01/05/2026 occupies a plot from its TransplantedAt date",
+			name: "bought lettuce seedling, transplanted on 01/05/2026 occupies a plot from its TransplantedAt date",
 			planting: Planting{
 				MaturityFrom:   MaturityFromSowing,
 				TransplantedAt: DateFromInt(2026, time.May, 1),
@@ -106,7 +106,7 @@ func TestPlanting_StartDate(t *testing.T) {
 			want: DateFromInt(2026, time.March, 15),
 		},
 		{
-			name:     "A crop with or transplantation date provided return a zero Date",
+			name:     "A crop with no sowing or transplantation date provided returns a zero Date",
 			planting: Planting{},
 			want:     Date{},
 		},

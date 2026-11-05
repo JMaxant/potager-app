@@ -71,7 +71,7 @@ tasks:
       - qa
     desc: Everything CI runs.
     cmds:
-      - task: fmt
+      - task: check:fmt
       - task: lint
       - task: test
       - task: check:sqlc
@@ -89,8 +89,6 @@ tasks:
 
   check:fmt:
     desc: Checks the code formatting.
-    aliases:
-      - fmt
     cmds:
       - |
         files=$(gofmt -l .)

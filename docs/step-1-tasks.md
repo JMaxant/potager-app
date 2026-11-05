@@ -54,8 +54,6 @@ The domain rules assume a few things that only later tasks can provide:
   `MAX(days_to_maturity)` over the planting's varieties (`design.md`, *Expected
   end*), and step 1 has a single variety. A planting with no variety gets `0`,
   so it has no expected end (`ExpectedEndSourceNone`, already tested).
-- **Task 11:** `import _ "time/tzdata"` in `cmd/potager`. A minimal Docker image
-  has no tzdata, so `DateFromTime` could not load `Europe/Paris`.
 - **Optional, any time:** the `exhaustive` linter (golangci-lint), to catch a
   `switch` on an enum that forgets a constant.
 

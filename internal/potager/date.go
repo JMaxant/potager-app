@@ -2,6 +2,7 @@ package potager
 
 import (
 	"time"
+	_ "time/tzdata" // embeds the zone database: Europe/Paris must load in a minimal image
 )
 
 var locParis *time.Location

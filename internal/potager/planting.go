@@ -30,7 +30,7 @@ const (
 	StatusGrowing Status = "growing"
 	// StatusDue applies to crops that are past their expected end, and not ended.
 	StatusDue Status = "due"
-	// StatusEnded applies to crops that have terminated or harvested (relies on user input).
+	// StatusEnded applies to crops that have been terminated or harvested (relies on user input).
 	StatusEnded Status = "ended"
 )
 
@@ -43,8 +43,9 @@ func (p Planting) OccupiedFrom() Date {
 	return p.TransplantedAt
 }
 
-// StartDate returns the earliest date of SownAt and TransplantedAt, or a zero Date{} if neither were provided.
-// A crop is always sown before it is transplanted, hence SownAt takes priority if it is provided.
+// StartDate returns SownAt when set, TransplantedAt otherwise, or a zero Date
+// when neither is. It relies on SownAt never being after TransplantedAt
+// (enforced by the database) and does not check it.
 func (p Planting) StartDate() Date {
 	if p.SownAt.IsZero() {
 		return p.TransplantedAt
@@ -64,6 +65,7 @@ func (p Planting) ExpectedEnd() (Date, ExpectedEndSource) {
 	case PurposeCover:
 		return Date{}, ExpectedEndSourceNone
 	case PurposeFood:
+		// Computed below.
 
 	default:
 		panic(fmt.Sprintf("Planting.ExpectedEnd: unknown Purpose %q", p.Purpose))
