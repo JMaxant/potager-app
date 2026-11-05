@@ -69,8 +69,9 @@ tasks:
     aliases:
       - check:all
       - qa
-    desc: Everything CI runs, note that it will fail until sqlc is fully implemented.
+    desc: Everything CI runs.
     cmds:
+      - task: check:fmt
       - task: lint
       - task: test
       - task: check:sqlc
@@ -81,13 +82,28 @@ tasks:
     cmd: go test -race ./...
 
   lint:
-    desc: Vet and static analysis
+    desc: Vet and static analysis.
     cmds:
       - go vet ./...
       - "{{.TOOLS}} staticcheck ./..."
 
+  check:fmt:
+    desc: Checks the code formatting.
+    cmds:
+      - |
+        files=$(gofmt -l .)
+        if [ -n "$files" ]; then
+          echo "Bad formatting on files :"
+          echo "$files" | sed 's/^/  - /'
+          echo
+          echo "fix with : gofmt -w $(echo $files)"
+          exit 1
+        fi
+
   check:sqlc:
     desc: SQLC generated files check.
+    status:
+      - "! test -f sqlc.yaml"
     cmd: "{{.TOOLS}} sqlc diff"
 
   check:templ:

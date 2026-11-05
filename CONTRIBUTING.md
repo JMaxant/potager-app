@@ -47,12 +47,21 @@ work, see [CLAUDE.md](CLAUDE.md).
 [`ci.yml`](.github/workflows/ci.yml) runs on every pull request and on every push
 to `main`, as one job, `quality`. It drives the same Task targets as `task check`:
 
-1. `task lint` (`go vet`, staticcheck)
-2. `task init:env` and `task up` start Postgres, only if a migration exists
-3. `task migrate`, only if a migration exists
-4. `task test`
-5. `task check:sqlc`, only if `sqlc.yaml` exists
-6. `task check:templ`, only if a `.templ` file exists
+1. `task check:fmt` (`gofmt -l`, fails and lists the files to fix)
+2. `task lint` (`go vet`, staticcheck)
+3. `task init:env` and `task up` start Postgres, only if a migration exists
+4. `task migrate`, only if a migration exists
+5. `task test`
+6. `task check:sqlc`, only if `sqlc.yaml` exists
+7. `task check:templ`, only if a `.templ` file exists
+
+A new check goes in two places: a step in `ci.yml` and a line in `task check`.
+CI does not call `task check` itself, so nothing catches a check added to only
+one of them. The same goes for conditions: a step guarded by `hashFiles(...)`
+needs the matching `status:` on its task, or `task check` fails locally where CI
+skips. `check:sqlc` is the example: it is skipped until `sqlc.yaml` exists.
+Name the sqlc config `sqlc.yaml` at the root: sqlc also accepts `sqlc.yml` and
+`sqlc.json`, but both conditions only look for `sqlc.yaml`.
 
 The conditional steps use `hashFiles(...)`, so they switch on by themselves when
 their input is added; a skipped step is grey, not green. A new push to the same

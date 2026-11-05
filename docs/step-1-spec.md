@@ -128,10 +128,11 @@ Heading is the plot name, with type, dimensions and area beneath it. Actions:
 
 Three sections, each hidden when empty:
 
-- **« Cultures en cours »** — started on or before today and `ended_at` empty,
-  ordered by start date. A planting whose expected end has passed stays here until
-  it is closed.
-- **« À venir »** — start date after today, ordered by start date
+- **« Cultures en cours »** — occupying the plot on or before today and
+  `ended_at` empty, ordered by start date. A planting whose expected end has
+  passed stays here until it is closed.
+- **« À venir »** — not occupying the plot yet: occupancy starting after today,
+  or a seedling still in its tray. Ordered by start date.
 - **« Historique »** — `ended_at` set, grouped by the year of `ended_at`
   descending, the heading being *« Saison 2025 »*
 
@@ -163,6 +164,7 @@ nom. »*
 | `variety_id` | Variété | select, loaded by HTMX | required |
 | `quantity` | Quantité | number | optional, > 0 |
 | `seed_rate_g_m2` | Dose de semis (g/m²) | number, step 0,1 | optional, > 0, shown only for *Engrais vert* |
+| `sown_in_place` | Semé en place | checkbox | defaults to checked when the species' `maturity_from` is *sowing*, unchecked otherwise |
 | `sown_at` | Semé le | date | see date rules |
 | `transplanted_at` | Planté le | date | see date rules |
 | `ended_at` | Récolté le / Terminé le | date | optional, not after today |
@@ -183,6 +185,7 @@ prévue »*; a cover crop is *« Terminé le »* and *« Terminaison prévue »*
 | --- | --- |
 | at least one of `sown_at` / `transplanted_at` | Indiquez au moins une date de semis ou de plantation. |
 | `transplanted_at` ≥ `sown_at` | La date de plantation ne peut pas précéder le semis. |
+| `sown_in_place` excludes `transplanted_at` | Une culture semée en place n'a pas de date de plantation. |
 | `ended_at` ≥ start date | La date de fin ne peut pas précéder le début de la culture. |
 | `ended_at` ≤ today | La date de fin ne peut pas être dans le futur. |
 | `expected_end_at` ≥ start date | La fin prévue ne peut pas précéder le début de la culture. |
@@ -197,11 +200,34 @@ values are always preserved on re-render.
 Computed by `internal/potager`, never stored, displayed wherever a planting
 appears.
 
+**Start date** — `StartDate`. `sown_at` when set, `transplanted_at` otherwise:
+the sowing for a crop the gardener sowed, in place or in a tray; the transplant
+for a plant bought ready to plant out. It is the earlier of the two dates,
+since validation (and the database) refuse a transplant before the sowing;
+`StartDate` relies on that rule rather than checking it. It dates the crop, not its place in the
+plot: a tomato sown in a tray on 15/03/2026 and planted out on 10/05/2026 starts
+on 15/03/2026; a lettuce bought and planted out on 01/05/2026 starts on
+01/05/2026. It orders the plot sections and bounds `ended_at` and
+`expected_end_at` in validation.
+
+**Occupancy** — `OccupiedFrom`. When the planting holds its plot: from `sown_at` when
+`sown_in_place`, from `transplanted_at` otherwise (ADR 0008). The same tray
+tomato occupies its plot from 10/05/2026, and nothing before; broad beans sown
+in place on 15/11/2025 occupy it from that day. It decides the plot sections and
+*Prévue* in the status table.
+
 **Expected end** — `ExpectedEnd`. A food planting with a maturity figure shows
 *« Récolte prévue : 29/07/2026 »*. Maturity is counted from the date the species
 names, with no fallback: a transplanted species with no transplant date shows
-*« Indiquez la date de plantation pour obtenir une récolte prévue »*, because
-counting seed-packet days from the sowing would show a harvest weeks too early. A cover crop shows nothing unless
+*« Indiquez la date de plantation ou saisissez une fin prévue »*, because
+counting seed-packet days from the sowing would show a harvest weeks too early.
+The message offers the manual entry because the same screen serves a seedling
+not yet planted out and a crop sown in place that never will be.
+A sown species with no sowing date (a plant bought at the market) shows no
+expected end and no message: the gardener cannot supply that date, and counting
+from the transplant would land weeks late. When both dates are set, a sown
+species still counts from the sowing, since the seed-packet figure already
+includes the time spent in the tray. A cover crop shows nothing unless
 `expected_end_at` was set by hand. A stored value always wins and is marked as
 such: *« Récolte prévue : 01/07/2026 (saisie) »*.
 
@@ -210,7 +236,7 @@ such: *« Récolte prévue : 01/07/2026 (saisie) »*.
 | Condition | Food label | Cover label |
 | --- | --- | --- |
 | `ended_at` set | Récoltée | Terminée |
-| start date in the future | Prévue | Prévue |
+| not occupying the plot yet | Prévue | Prévue |
 | expected end passed, `ended_at` empty | À récolter | À terminer |
 | otherwise | En cours | En cours |
 
@@ -277,7 +303,11 @@ fragment is reachable only through HTMX.
    reveals the seed-rate field.
 5. A tomato transplanted on 10/05/2026 with an 80-day variety shows *« Récolte
    prévue : 29/07/2026 »*; the same variety dated only by its sowing shows no
-   expected end and asks for the transplant date.
+   expected end and asks for the transplant date or a manual expected end. A
+   30-day lettuce bought as a plant and planted out on 01/05/2026, with no
+   sowing date, shows no expected end and no message; sown in a tray on
+   01/04/2026 and planted out on 20/04/2026, it shows *« Récolte prévue :
+   01/05/2026 »*.
 6. A cover crop shows no expected end unless one was entered by hand.
 7. A planting with neither sowing nor planting date is refused with the message
    above, and the entered values survive the refusal.
@@ -286,7 +316,7 @@ fragment is reachable only through HTMX.
 9. The plot list issues a constant number of queries regardless of how many plots
    exist.
 10. Every screen is usable at 375 px wide.
-11. `task check` passes: vet, staticcheck, tests, `sqlc diff`, `templ generate --check`.
+11. `task check` passes: gofmt, vet, staticcheck, tests, `sqlc diff`, `templ generate --check`.
     CI runs these as quality gates on `main`; it does not deploy.
 12. A planting whose expected end has passed shows *À récolter* (or *À terminer*)
     and stays under *Cultures en cours* until closed.
@@ -298,10 +328,16 @@ fragment is reachable only through HTMX.
 16. `docker compose up` applies the migrations through the `migrate` service before
     the app starts.
 17. The app is deployed and one real sowing has been recorded through it.
+18. A tomato sown in a tray on 15/03/2026 is under **« À venir »** as *Prévue*
+    on 01/04/2026, and under **« Cultures en cours »** once planted out on
+    10/05/2026. Broad beans sown in place on 15/11/2025 are under
+    **« Cultures en cours »** from that day. Ticking *Semé en place* with a
+    planting date is refused with the message above.
 
 ## Tests
 
-- **Domain** — done: `ExpectedEnd`, `StartDate`, `Season`, `NetEffect`.
+- **Domain** — table-driven tests for `Date`, `ExpectedEnd`, `Season`,
+  `NetEffect` (done); `StartDate`, occupancy and `Status` (to do).
 - **Store** — one integration test per query against a real Postgres, including
   the transactional write of a planting plus its variety row, and the
   archived-plot filter.

@@ -25,7 +25,7 @@ in, when they come out, and whether the succession makes agronomic sense.
 | Data | Postgres 18, `sqlc` over hand-written SQL, `goose` migrations. No ORM. |
 | Operations | `log/slog`, `context` throughout, graceful shutdown, env config, wrapped errors, `/health` |
 | Deploy | Docker Compose + Caddy (HTTPS, basic auth until step 3) on a small VPS. A `migrate` service applies migrations before the app starts. By hand until it is boring |
-| CI | GitHub Actions on `main`, quality gates only (no deploy): vet, staticcheck, tests against a real Postgres, `sqlc diff`, `templ generate --check` |
+| CI | GitHub Actions on `main`, quality gates only (no deploy): gofmt, vet, staticcheck, tests against a real Postgres, `sqlc diff`, `templ generate --check` |
 
 `sqlc diff` and `templ generate --check` are in CI on purpose: generated code that
 has drifted from its source fails the build instead of rotting quietly.
@@ -91,8 +91,11 @@ families ──< species ──< varieties ──< planting_varieties >── pl
   manure.
 - **`plots`** — name, type, dimensions, position, `archived_at`. No coordinates:
   a map can be derived from dimensions and ordering if one is ever built.
-- **`plantings`** — one plot, one `purpose`, one set of dates. Occupancy is a
-  generated `daterange`.
+- **`plantings`** — one plot, one `purpose`, one set of dates, and
+  `sown_in_place`. Occupancy is a generated `daterange` starting at `sown_at`
+  when `sown_in_place`, at `transplanted_at` otherwise, and null while a
+  seedling waits in its tray (ADR 0008). `CHECK (transplanted_at >= sown_at)`:
+  a plant is sown before it is planted out, and the start date relies on it.
 - **`planting_varieties`** — components of a planting, with `quantity` and
   `seed_rate_g_m2`.
 
