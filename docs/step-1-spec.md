@@ -161,7 +161,7 @@ nom. »*
 | `plot_id` | Parcelle | select | required, preselected from the query parameter |
 | `purpose` | Type de culture | radio | required: *Culture vivrière* / *Engrais vert*, defaults to vivrière |
 | `species_id` | Espèce | select, `<optgroup>` by family | required |
-| `variety_id` | Variété | select, loaded by HTMX | required |
+| `variety_id` | Variété | select, `<optgroup>` by species until a species is chosen, then flat; reloaded by HTMX | required |
 | `quantity` | Quantité | number | optional, > 0 |
 | `seed_rate_g_m2` | Dose de semis (g/m²) | number, step 0,1 | optional, > 0, shown only for *Engrais vert* |
 | `sown_in_place` | Semé en place | checkbox | defaults to checked when the species' `maturity_from` is *sowing*, unchecked otherwise |
@@ -175,6 +175,13 @@ nom. »*
 **Selecting *Engrais vert* filters the species list** to those with
 `suitable_as_cover`, and reveals the seed-rate field. Selecting a species
 reloads the variety options.
+
+**Variety options without a species** are every variety, grouped in one
+`<optgroup>` per species. With a species chosen (through HTMX, or when the form
+is re-rendered after a refusal) they are that species' varieties, flat. Both
+come from the same `variety_options.templ`; without JavaScript the grouped list
+is what the user sees, and the `variety_id` belongs to `species_id` rule catches
+a mismatch.
 
 **Labels change with purpose**: a food planting is *« Récolté le »* and *« Récolte
 prévue »*; a cover crop is *« Terminé le »* and *« Terminaison prévue »*.
@@ -260,7 +267,8 @@ variety, species and family joined), `GetPlanting`, `CreatePlanting`,
 the date take `today` as a parameter.
 
 `catalogue.sql` — `ListSpecies` (ordered by family then name, with an optional
-cover-only filter), `ListVarietiesBySpecies`, `GetVariety`.
+cover-only filter), `ListVarieties` (every variety with its species name, ordered
+by species then name, for the grouped list), `ListVarietiesBySpecies`, `GetVariety`.
 
 `ArchivePlot` is preceded by a count of the plot's plantings in progress for the
 confirmation message. `CreatePlanting` and `UpdatePlanting` write `plantings` and
@@ -282,7 +290,8 @@ fragment is reachable only through HTMX.
 - Single column below 640 px; the sidebar becomes a top bar. Touch targets ≥ 44 px,
   because the phone is used standing in the garden.
 - No JavaScript beyond HTMX itself. Both HTMX endpoints degrade: without it the
-  variety list shows every variety, and deleting goes through the confirmation screen.
+  variety list shows every variety grouped by species, and deleting goes through the
+  confirmation screen.
 - Every form control has a `<label for>`; errors are linked with
   `aria-describedby`; the error summary receives focus on failed submission.
 - `lang="fr"` on `<html>`.
