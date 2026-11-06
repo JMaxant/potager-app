@@ -43,9 +43,9 @@ application code; Claude is a reviewer and a pairing partner, not the author.
     point, or asks for practice, leave one `TODO(user)` of a few lines in a
     test file. Never in application code.
 - **The spec is the source of truth**: `docs/step-1-spec.md` for behaviour,
-  `docs/design.md` for the model, `CONTEXT.md` for vocabulary, `docs/adr/` for
-  decisions. Update them when a decision changes; do not let the code diverge
-  silently.
+  `docs/design.md` for the model, `docs/front-end.md` for styling, components
+  and static files, `CONTEXT.md` for vocabulary, `docs/adr/` for decisions.
+  Update them when a decision changes; do not let the code diverge silently.
 - `scaffold` is a reference branch holding an earlier implementation. Read it
   to compare; do not merge it.
 

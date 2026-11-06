@@ -21,14 +21,20 @@ in, when they come out, and whether the succession makes agronomic sense.
 | Concern | Choice |
 | --- | --- |
 | Backend | Go 1.26, stdlib `net/http`, dependencies wired by hand in `main.go`. No framework, no DI container. |
-| Templates | `templ` + HTMX, used minimally; native CSS, no framework or preprocessor ([ADR 0005](adr/0005-server-rendered-interface-with-templ-and-htmx.md)) |
+| Templates | `templ` + HTMX 4, used minimally; native CSS, no framework or preprocessor ([ADR 0005](adr/0005-server-rendered-interface-with-templ-and-htmx.md), [ADR 0009](adr/0009-htmx-is-vendored.md)). See [front-end.md](front-end.md) |
 | Data | Postgres 18, `sqlc` over hand-written SQL, `goose` migrations. No ORM. |
 | Operations | `log/slog`, `context` throughout, graceful shutdown, env config, wrapped errors, `/health` |
 | Deploy | Docker Compose + Caddy (HTTPS, basic auth until step 3) on a small VPS. A `migrate` service applies migrations before the app starts. By hand until it is boring |
 | CI | GitHub Actions on `main`, quality gates only (no deploy): gofmt, vet, staticcheck, tests against a real Postgres, `sqlc diff`, `templ generate --check` |
 
 `sqlc diff` and `templ generate --check` are in CI on purpose: generated code that
-has drifted from its source fails the build instead of rotting quietly.
+has drifted from its source fails the build instead of rotting quietly. Both
+checks assume the generated code is **committed**, and it is: sqlc output and
+`*_templ.go` files are in Git, marked `linguist-generated` in `.gitattributes` so
+GitHub folds them in pull requests. A conflict in a generated file is never
+resolved by hand: resolve the source, then `task generate`. The alternative
+(generate in CI, deploy a built artefact) makes drift impossible instead of
+detected, and is worth revisiting when deployment stops being manual (#16).
 
 ### Layout
 
@@ -36,7 +42,7 @@ has drifted from its source fails the build instead of rotting quietly.
 cmd/potager/      entrypoint
 internal/potager/ domain types and agronomic rules — imports no net/http, no database/sql
 internal/store/   sqlc output and queries
-internal/web/     handlers, templ components, middleware
+internal/web/     handlers, templ components, middleware, embedded static files
 migrations/       goose migrations, including the seeded catalogue
 ```
 
