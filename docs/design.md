@@ -97,7 +97,7 @@ families ──< species ──< varieties ──< planting_varieties >── pl
   Step 6 adds the columns it needs.
 - **`varieties`** — `days_to_maturity`, null for species only ever sown as green
   manure.
-- **`plots`** — name, type, dimensions, position, `archived_at`. No coordinates:
+- **`plots`** — name, `plot_type`, dimensions, position, `archived_at`. No coordinates:
   a map can be derived from dimensions and ordering if one is ever built.
 - **`plantings`** — one plot, one `purpose`, one set of dates, and
   `sown_in_place`. Occupancy is a generated `daterange` starting at `sown_at`

@@ -145,7 +145,7 @@ and a delete control.
 | Field | Label | Type | Rules |
 | --- | --- | --- | --- |
 | `name` | Nom | text | required, 1–80 characters |
-| `type` | Type | select | required, defaults to *Pleine terre* |
+| `plot_type` | Type | select | required, defaults to *Pleine terre* |
 | `length_cm` | Longueur (m) | number, step 0,01 | optional, > 0, ≤ 100 m |
 | `width_cm` | Largeur (m) | number, step 0,01 | optional, > 0, ≤ 100 m |
 | `position` | Ordre d'affichage | number | required, defaults to `max(position) + 1` |

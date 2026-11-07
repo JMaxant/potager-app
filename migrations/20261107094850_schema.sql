@@ -34,7 +34,21 @@ CREATE TABLE varieties
     days_to_maturity smallint CHECK ( days_to_maturity > 0 ),
     UNIQUE (species_id, name)
 );
+
+CREATE TYPE plot_type AS ENUM ('open_ground', 'raised_bed', 'greenhouse', 'coldframe');
+CREATE TABLE plots
+(
+    id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name        varchar(80) CHECK ( name <> '' ) NOT NULL,
+    length_cm   smallint CHECK ( length_cm BETWEEN 1 AND 10000),
+    width_cm    smallint CHECK ( width_cm BETWEEN 1 AND 10000 ),
+    plot_type   plot_type                 NOT NULL DEFAULT 'open_ground',
+    position    smallint                  NOT NULL,
+    archived_at timestamptz
+);
 -- +goose Down
+DROP TABLE plots;
+DROP TYPE plot_type;
 DROP TABLE varieties;
 DROP TABLE species;
 DROP TYPE nitrogen_demand;
