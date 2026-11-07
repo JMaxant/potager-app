@@ -91,8 +91,10 @@ families ──< species ──< varieties ──< planting_varieties >── pl
   return to a plot) and `nitrogen_fixing`. Fixation is a family-level botanical
   trait: every Fabaceae nodulates, nothing else in the catalogue does.
 - **`species`** — `nitrogen_demand` (heavy/moderate/light), `maturity_from`
-  (sowing/transplant), `spacing_cm`, `suitable_as_cover`,
-  `termination_lead_days`.
+  (sowing/transplant), `suitable_as_cover`, `termination_lead_days`. No
+  spacing yet: nothing reads it before spacing advice (step 6), and a single
+  number is ambiguous, since spacing is given in the row and between rows.
+  Step 6 adds the columns it needs.
 - **`varieties`** — `days_to_maturity`, null for species only ever sown as green
   manure.
 - **`plots`** — name, type, dimensions, position, `archived_at`. No coordinates:
@@ -184,7 +186,8 @@ catalogue grows.
    plantings; plots need one too.
 4. **Season overview and archiving UI.**
 5. **Catalogue CRUD and reusable cover-crop mixes.**
-6. Plot map, spacing advice, whatever the garden asks for.
+6. Plot map, spacing advice (in-row and between-row spacing on `species`),
+   whatever the garden asks for.
 
 Later, unscheduled: **harvests** — a table of its own, attached to a planting
 (date, quantity, unit), because a crop is picked many times.
