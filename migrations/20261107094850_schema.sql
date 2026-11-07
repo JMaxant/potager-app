@@ -42,11 +42,28 @@ CREATE TABLE plots
     name        varchar(80) CHECK ( name <> '' ) NOT NULL,
     length_cm   smallint CHECK ( length_cm BETWEEN 1 AND 10000),
     width_cm    smallint CHECK ( width_cm BETWEEN 1 AND 10000 ),
-    plot_type   plot_type                 NOT NULL DEFAULT 'open_ground',
-    position    smallint                  NOT NULL,
+    plot_type   plot_type                        NOT NULL DEFAULT 'open_ground',
+    position    smallint                         NOT NULL,
     archived_at timestamptz
 );
+
+CREATE TYPE planting_purpose AS ENUM ('food', 'cover');
+CREATE TABLE plantings
+(
+    id                     bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    plot_id                bigint REFERENCES plots (id) ON DELETE RESTRICT NOT NULL,
+    purpose                planting_purpose                                NOT NULL,
+    sown_at                date,
+    sown_in_place          bool                                            NOT NULL,
+    transplanted_at        date,
+    ended_at               date,
+    expected_end_at        date,
+    maturity_days_override smallint CHECK ( maturity_days_override > 0 ),
+    notes                  text CHECK ( notes <> '' )
+);
 -- +goose Down
+DROP TABLE plantings;
+DROP TYPE planting_purpose;
 DROP TABLE plots;
 DROP TYPE plot_type;
 DROP TABLE varieties;
