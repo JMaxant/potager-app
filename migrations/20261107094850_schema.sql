@@ -1,4 +1,5 @@
 -- +goose Up
+CREATE EXTENSION IF NOT EXISTS btree_gist ;
 CREATE TABLE families
 (
     id                      bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -60,9 +61,15 @@ CREATE TABLE plantings
     expected_end_at        date,
     maturity_days_override smallint CHECK ( maturity_days_override > 0 ),
     notes                  text CHECK ( notes <> '' ),
+    occupancy              daterange GENERATED ALWAYS AS (
+        CASE
+            WHEN sown_in_place THEN daterange(sown_at, ended_at, '[]' )
+            WHEN transplanted_at IS NOT NULL THEN daterange(transplanted_at, ended_at, '[]')
+        END
+        ) STORED,
     CONSTRAINT at_least_one_date_is_provided CHECK (
         sown_at IS NOT NULL
-        OR
+            OR
         transplanted_at IS NOT NULL
         ),
     CONSTRAINT transplantation_date_is_not_before_sown_date CHECK (
@@ -72,7 +79,9 @@ CREATE TABLE plantings
         NOT sown_in_place OR transplanted_at IS NULL
         )
 );
+CREATE INDEX plantings_plot_id_occupancy_idx ON plantings USING gist(plot_id, occupancy);
 -- +goose Down
+
 DROP TABLE plantings;
 DROP TYPE planting_purpose;
 DROP TABLE plots;
@@ -82,3 +91,4 @@ DROP TABLE species;
 DROP TYPE nitrogen_demand;
 DROP TYPE maturity_from;
 DROP TABLE families;
+-- btree_gist is left installed: it belongs to the database, not to this migration.
