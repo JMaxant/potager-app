@@ -13,6 +13,14 @@ _Avoid_: bed, field, garden
 The botanical reference the garden draws on: families, species and varieties. Seeded by migration and read-only in step 1; the gardener records plots and plantings, never the catalogue. Not a type in code.
 _Avoid_: listing, library, reference data
 
+**Species** (*espèce*):
+A kind of plant as the gardener names it: tomate, carotte, moutarde. It belongs to one botanical family, which carries the rotation interval and nitrogen fixation. It holds what is true of the plant whatever it is grown for: nitrogen demand, the date maturity is counted from, and whether it suits a cover crop. Suiting a cover crop does not make it cover-only: fève and radis are also eaten.
+_Avoid_: crop, plant (in code)
+
+**Variety** (*variété*):
+A named cultivar of a species: Roma, Rose de Berne. It carries the days to maturity, empty for a variety only ever grown as a cover crop. A planting records varieties, never a species directly: the species is read from the variety.
+_Avoid_: cultivar (in code)
+
 **Planting** (*culture*):
 One act of sowing or transplanting in one plot, with one intent and one set of dates. A cover crop mix is a single planting.
 _Avoid_: crop, sowing, culture (in code)

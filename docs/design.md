@@ -185,8 +185,9 @@ catalogue grows.
    the multi-variety picker, the backward-derived termination suggestion. Decide
    here whether a disease incident on a planting should extend its family's
    interval; the family interval alone already covers blight on tomatoes.
-3. **Auth.** Users, session cookies, argon2id. `user_id` already exists on
-   plantings; plots need one too.
+3. **Auth.** Users, session cookies, argon2id. Step 1 has no `user_id`
+   anywhere; this step adds it to plots and plantings, with a migration that
+   assigns existing rows to the first user.
 4. **Season overview and archiving UI.**
 5. **Catalogue CRUD and reusable cover-crop mixes.**
 6. Plot map, spacing advice (in-row and between-row spacing on `species`),
