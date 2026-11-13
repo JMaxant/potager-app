@@ -59,7 +59,18 @@ CREATE TABLE plantings
     ended_at               date,
     expected_end_at        date,
     maturity_days_override smallint CHECK ( maturity_days_override > 0 ),
-    notes                  text CHECK ( notes <> '' )
+    notes                  text CHECK ( notes <> '' ),
+    CONSTRAINT at_least_one_date_is_provided CHECK (
+        sown_at IS NOT NULL
+        OR
+        transplanted_at IS NOT NULL
+        ),
+    CONSTRAINT transplantation_date_is_not_before_sown_date CHECK (
+        transplanted_at >= sown_at
+        ),
+    CONSTRAINT sown_in_place_crops_do_not_have_transplantation_dates CHECK (
+        NOT sown_in_place OR transplanted_at IS NULL
+        )
 );
 -- +goose Down
 DROP TABLE plantings;

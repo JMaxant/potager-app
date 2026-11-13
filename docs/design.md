@@ -94,7 +94,10 @@ families ──< species ──< varieties ──< planting_varieties >── pl
   (sowing/transplant), `suitable_as_cover`, `termination_lead_days`. No
   spacing yet: nothing reads it before spacing advice (step 6), and a single
   number is ambiguous, since spacing is given in the row and between rows.
-  Step 6 adds the columns it needs.
+  Step 6 adds the columns it needs. `nitrogen_demand` and `maturity_from` are
+  required for every species, cover-suitable ones included:
+  `suitable_as_cover` does not mean cover-only (moutarde and féverole are also
+  eaten), and demand describes the plant, not the gardener's intent.
 - **`varieties`** — `days_to_maturity`, null for species only ever sown as green
   manure.
 - **`plots`** — name, `plot_type`, dimensions, position, `archived_at`. No coordinates:
