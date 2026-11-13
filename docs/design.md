@@ -91,11 +91,16 @@ families ──< species ──< varieties ──< planting_varieties >── pl
   return to a plot) and `nitrogen_fixing`. Fixation is a family-level botanical
   trait: every Fabaceae nodulates, nothing else in the catalogue does.
 - **`species`** — `nitrogen_demand` (heavy/moderate/light), `maturity_from`
-  (sowing/transplant), `spacing_cm`, `suitable_as_cover`,
-  `termination_lead_days`.
+  (sowing/transplant), `suitable_as_cover`, `termination_lead_days`. No
+  spacing yet: nothing reads it before spacing advice (step 6), and a single
+  number is ambiguous, since spacing is given in the row and between rows.
+  Step 6 adds the columns it needs. `nitrogen_demand` and `maturity_from` are
+  required for every species, cover-suitable ones included:
+  `suitable_as_cover` does not mean cover-only (moutarde and féverole are also
+  eaten), and demand describes the plant, not the gardener's intent.
 - **`varieties`** — `days_to_maturity`, null for species only ever sown as green
   manure.
-- **`plots`** — name, type, dimensions, position, `archived_at`. No coordinates:
+- **`plots`** — name, `plot_type`, dimensions, position, `archived_at`. No coordinates:
   a map can be derived from dimensions and ordering if one is ever built.
 - **`plantings`** — one plot, one `purpose`, one set of dates, and
   `sown_in_place`. Occupancy is a generated `daterange` starting at `sown_at`
@@ -180,11 +185,12 @@ catalogue grows.
    the multi-variety picker, the backward-derived termination suggestion. Decide
    here whether a disease incident on a planting should extend its family's
    interval; the family interval alone already covers blight on tomatoes.
-3. **Auth.** Users, session cookies, argon2id. `user_id` already exists on
-   plantings; plots need one too.
+3. **Auth.** Users, session cookies, argon2id. Step 1 has no `user_id`
+   anywhere; this step adds it to plots and plantings.
 4. **Season overview and archiving UI.**
 5. **Catalogue CRUD and reusable cover-crop mixes.**
-6. Plot map, spacing advice, whatever the garden asks for.
+6. Plot map, spacing advice (in-row and between-row spacing on `species`),
+   whatever the garden asks for.
 
 Later, unscheduled: **harvests** — a table of its own, attached to a planting
 (date, quantity, unit), because a crop is picked many times.
