@@ -186,8 +186,7 @@ catalogue grows.
    here whether a disease incident on a planting should extend its family's
    interval; the family interval alone already covers blight on tomatoes.
 3. **Auth.** Users, session cookies, argon2id. Step 1 has no `user_id`
-   anywhere; this step adds it to plots and plantings, with a migration that
-   assigns existing rows to the first user.
+   anywhere; this step adds it to plots and plantings.
 4. **Season overview and archiving UI.**
 5. **Catalogue CRUD and reusable cover-crop mixes.**
 6. Plot map, spacing advice (in-row and between-row spacing on `species`),

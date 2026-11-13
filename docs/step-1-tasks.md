@@ -43,8 +43,6 @@ the Compose and CI parts can start as soon as task 1 exists.
 
 The domain rules assume a few things that only later tasks can provide:
 
-- **Task 2:** `CHECK (transplanted_at >= sown_at)` on `plantings`. `StartDate`
-  relies on this invariant and does not check it (see `design.md`).
 - **Task 6:** `ParsePurpose`, `ParseMaturityFrom` and `ParseDemand`, shaped
   `func(string) (X, error)` like `strconv.ParseBool`. They are the boundary
   where a form value or a column becomes an enum. They return an `error` and
