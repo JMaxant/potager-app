@@ -1,5 +1,5 @@
 -- +goose Up
-CREATE EXTENSION IF NOT EXISTS btree_gist ;
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 CREATE TABLE families
 (
     id                      bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -63,9 +63,9 @@ CREATE TABLE plantings
     notes                  text CHECK ( notes <> '' ),
     occupancy              daterange GENERATED ALWAYS AS (
         CASE
-            WHEN sown_in_place THEN daterange(sown_at, ended_at, '[]' )
+            WHEN sown_in_place THEN daterange(sown_at, ended_at, '[]')
             WHEN transplanted_at IS NOT NULL THEN daterange(transplanted_at, ended_at, '[]')
-        END
+            END
         ) STORED,
     CONSTRAINT at_least_one_date_is_provided CHECK (
         sown_at IS NOT NULL
@@ -79,9 +79,18 @@ CREATE TABLE plantings
         NOT sown_in_place OR transplanted_at IS NULL
         )
 );
-CREATE INDEX plantings_plot_id_occupancy_idx ON plantings USING gist(plot_id, occupancy);
--- +goose Down
+CREATE INDEX plantings_plot_id_occupancy_idx ON plantings USING gist (plot_id, occupancy);
 
+CREATE TABLE planting_varieties
+(
+    planting_id    bigint REFERENCES plantings (id) ON DELETE CASCADE  NOT NULL,
+    variety_id     bigint REFERENCES varieties (id) ON DELETE RESTRICT NOT NULL,
+    quantity       smallint CHECK ( quantity > 0 ),
+    seed_rate_g_m2 decimal(4, 1) CHECK ( seed_rate_g_m2 > 0 ),
+    PRIMARY KEY (planting_id, variety_id)
+);
+-- +goose Down
+DROP TABLE planting_varieties;
 DROP TABLE plantings;
 DROP TYPE planting_purpose;
 DROP TABLE plots;
